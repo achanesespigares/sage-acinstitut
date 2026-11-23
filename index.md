@@ -26,7 +26,7 @@ El libro acaba de empezar. Ya puedes leer [Cómo leer este libro](capitulos/00-c
 
 | Parte | Capítulos |
 |---|---|
-| I · Primeros pasos | **[Sage como calculadora exacta](capitulos/01-calculadora.md)** · **[El preparador](capitulos/02-preparador.md)** · Variables simbólicas y expresiones · Funciones · Gráficos en 2D y 3D |
+| I · Primeros pasos | **[Sage como calculadora exacta](capitulos/01-calculadora.md)** · **[El preparador](capitulos/02-preparador.md)** · **[Variables simbólicas y expresiones](capitulos/03-simbolicas.md)** · Funciones · Gráficos en 2D y 3D |
 | II · Cálculo | Límites y continuidad · Derivadas · Integrales exactas y numéricas · Series, Taylor y sumas · Ecuaciones y sistemas · Ecuaciones diferenciales |
 | III · Álgebra lineal | Vectores y matrices sobre ℚ, ℝ y GF(p) · Sistemas, rango y Gauss paso a paso · Determinantes e inversas · Núcleo, imagen y bases · Autovalores, diagonalización y Jordan |
 | IV · Números y estructuras | Primos, mcd y congruencias · Polinomios y anillos · Combinatoria y probabilidad · Grafos |

@@ -98,7 +98,13 @@ def padre_de(v):
 #    («Calls the PARI function isprime») y next_prime() («calls the PARI function nextprime»).
 #  · MPFR: los decimales de Sage son de real_mpfr («binding for the MPFR … library»).
 #  · GMP: los enteros y las fracciones de Sage guardan sus números con GMP.
+#  · Pynac: las expresiones de SR son objetos de Pynac (expression.pyx se compila con
+#    sage/symbolic/ginac/*.cpp). Las cuentas con ellas, expand() (self._gobj.expand),
+#    subs() y la llamada p(x=…) (self._gobj.subs_map) y factor() de una expresión
+#    racional (g_factor) las hace Pynac. Si factor() no es racional, va a Maxima, y eso
+#    ya lo ve el perfilador.
 METODOS_PARI = {"factor", "is_prime", "next_prime"}
+METODOS_PYNAC = {"expand", "subs", "factor"}
 MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima")]
 
 
@@ -108,7 +114,36 @@ def motor_por_valor(v):
         return "GMP"
     if corto == "RR" or corto.startswith("RealField("):
         return "MPFR"
+    if corto == "SR":
+        return "Pynac"
     return None
+
+
+def llamadas_pynac(texto_prep, ctx):
+    """¿La línea expande, sustituye o factoriza una expresión de SR, o la llama con p(x=…)?"""
+    try:
+        arbol = ast.parse(texto_prep.strip())
+    except SyntaxError:
+        return False
+    for n in ast.walk(arbol):
+        if not isinstance(n, ast.Call):
+            continue
+        f = n.func
+        if isinstance(f, ast.Attribute) and f.attr in METODOS_PYNAC:
+            objeto = f.value
+        elif isinstance(f, ast.Name) and f.id in METODOS_PYNAC and n.args:
+            objeto = n.args[0]
+        elif n.keywords and not n.args:
+            objeto = f                            # p(x=2): sustituir llamando a la expresión
+        else:
+            continue
+        try:
+            v = eval(compile(ast.Expression(objeto), "", "eval"), entorno(), dict(ctx))
+        except Exception:
+            continue
+        if padre_de(v)[0] == "SR":
+            return True
+    return False
 
 
 def llamadas_pari(texto_prep, ctx):
@@ -156,6 +191,8 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
             motores.append(m)
     if llamadas_pari(texto_prep, ctx_antes) and "PARI" not in motores:
         motores.append("PARI")
+    if not motores and llamadas_pynac(texto_prep, ctx_antes):
+        motores.append("Pynac")
     try:
         arbol = ast.parse(texto_prep.strip())
         opera = any(isinstance(n, ARITMETICA) or es_aproximar(n) for n in ast.walk(arbol))
@@ -233,7 +270,23 @@ def visible(k, v):
     return True
 
 
+def inmutable_de_sage(v):
+    """Un elemento de Sage que no se puede modificar (un entero, una expresión de SR…)."""
+    if not type(v).__module__.startswith("sage."):
+        return False
+    mutable = getattr(v, "is_mutable", None)
+    try:
+        return not (callable(mutable) and mutable())
+    except Exception:
+        return False
+
+
 def copia(v):
+    # Los elementos inmutables de Sage se guardan tal cual: copiarlos los reconstruye, y una
+    # expresión de SR reconstruida se vuelve a simplificar con los supuestos activos en ese
+    # momento (assume), así que la foto no enseñaría lo que el programa tiene guardado.
+    if inmutable_de_sage(v):
+        return v
     try:
         return copy.deepcopy(v)
     except Exception:            # generadores, ficheros…: se guarda la referencia

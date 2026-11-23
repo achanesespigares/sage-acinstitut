@@ -8,6 +8,8 @@ motor y errores. Si el mini-Sage no sabe hacer algo, tiene que decirlo (NoEnElLa
 el mismo paso en que Sage lo hace; los pasos anteriores deben coincidir igualmente.
 
 Una prueba que debe acabar en ese aviso lleva en su primera línea:  # espera: aviso
+En los capítulos, lo mismo se pide con "solo_sage": true en la config del visualizador (los
+programas simbólicos, que solo puede ejecutar Sage): los pasos anteriores al aviso se comparan.
 Sale con código 1 si alguna prueba no coincide.
 """
 import json
@@ -48,7 +50,7 @@ def con(motor, codigo, cfg):
 
 
 def compara(nombre, codigo, cfg):
-    espera_aviso = codigo.lstrip().startswith("# espera: aviso")
+    espera_aviso = codigo.lstrip().startswith("# espera: aviso") or bool((cfg or {}).get("solo_sage"))
     cfg = cfg or {"columnas": [], "fila_en": "cada_linea", "mostrar_tipos": True}
     real = con("sage", codigo, json.loads(json.dumps(cfg)))
     mini = con("minisage", codigo, json.loads(json.dumps(cfg)))

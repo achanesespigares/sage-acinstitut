@@ -22,6 +22,7 @@ project:
       children:
         - file: capitulos/01-calculadora.md
         - file: capitulos/02-preparador.md
+        - file: capitulos/03-simbolicas.md
 site:
   template: book-theme
   options:

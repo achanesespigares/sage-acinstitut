@@ -390,7 +390,7 @@ class Integer(_Operaciones):
     def factor(self, algorithm=None, proof=None):
         if algorithm is not None:
             no_lo_se("factor() con un algoritmo a elegir")
-        return Factorization.de_entero(self._n)
+        return IntegerFactorization.de_entero(self._n)
 
     def divisors(self):
         if self._n == 0:
@@ -767,7 +767,12 @@ class Factorization:
     expand = value
 
     def __reduce__(self):
-        return (Factorization, ([(int(p), int(e)) for p, e in self._pares], self._unidad))
+        return (type(self), ([(int(p), int(e)) for p, e in self._pares], self._unidad))
+
+
+class IntegerFactorization(Factorization):
+    """La factorización de un entero: en Sage es una clase hija de Factorization."""
+    __module__ = "sage.structure.factorization_integer"
 
 
 # ── Funciones de Sage que el laboratorio sabe hacer ───────────────────────────────────────

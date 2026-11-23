@@ -227,6 +227,7 @@ const MOTORES = {
   MPFR: "la biblioteca de decimales con la precisión que se pida",
   PARI: "el programa de teoría de números (factorizar, primos…)",
   Maxima: "el programa de cálculo simbólico (integrales, límites, ecuaciones…)",
+  Pynac: "la biblioteca de expresiones simbólicas de Sage (sumar, expandir, sustituir…)",
 };
 // Nombres completos de los padres, para la narración
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", SR: "el anillo simbólico" };
