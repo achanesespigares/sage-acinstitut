@@ -105,9 +105,10 @@ def padre_de(v):
 #    sage/symbolic/ginac/*.cpp). Las cuentas con ellas, expand() (self._gobj.expand),
 #    subs() y la llamada p(x=…) (self._gobj.subs_map) y factor() de una expresión
 #    racional (g_factor) las hace Pynac. Si factor() no es racional, va a Maxima, y eso
-#    ya lo ve el perfilador.
+#    ya lo ve el perfilador. diff() y derivative() de una expresión acaban en
+#    Expression._derivative, que llama a self._gobj.diff: también Pynac.
 METODOS_PARI = {"factor", "is_prime", "next_prime"}
-METODOS_PYNAC = {"expand", "subs", "factor"}
+METODOS_PYNAC = {"expand", "subs", "factor", "diff", "derivative", "differentiate"}
 MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   # dibujar: Graphics.save pasa por matplotlib (2D); los 3D en PNG, por la interfaz de Tachyon
                   (re.compile(r"[/\\]matplotlib[/\\]"), "matplotlib"),

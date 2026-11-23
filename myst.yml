@@ -28,6 +28,7 @@ project:
     - title: Parte II · Cálculo
       children:
         - file: capitulos/06-limites.md
+        - file: capitulos/07-derivadas.md
 site:
   template: book-theme
   options:
