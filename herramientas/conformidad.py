@@ -35,7 +35,7 @@ def programas(filtro):
         texto = cap.read_text(encoding="utf-8")
         for i, w in enumerate(WIDGET.finditer(texto)):
             cfg = json.loads(w.group(1))["config"]
-            if cfg.get("tipo") in ("laboratorio", "preguntas"):
+            if cfg.get("tipo") in ("laboratorio", "preguntas", "sagereal"):
                 continue
             celdas = list(CELDA.finditer(texto, 0, w.start()))
             nombre = f"{cap.stem}#{i + 1}"

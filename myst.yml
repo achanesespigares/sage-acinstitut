@@ -24,6 +24,7 @@ project:
         - file: capitulos/02-preparador.md
         - file: capitulos/03-simbolicas.md
         - file: capitulos/04-funciones.md
+        - file: capitulos/05-graficos.md
 site:
   template: book-theme
   options:

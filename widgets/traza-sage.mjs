@@ -119,6 +119,8 @@ pre.tz-codigo{ margin:0; font:400 14px/1.85 var(--mono); overflow-x:auto; backgr
 .tz-matriz th{ font:500 12px/1 var(--mono); color:var(--banda); padding:4px 6px; border:0; background:none; }
 .tz-consola{ background:var(--tinta); color:#EDEDED; font:400 14px/1.6 var(--mono); padding:10px 12px; min-height:2.6em; white-space:pre-wrap; }
 .tz-consola .pr{ color:#9A9A9A; }
+.tz-codigo-real{ margin:0; padding:10px 12px; font:400 14px/1.6 var(--mono); white-space:pre; overflow-x:auto; }
+.tz-consola .tz-img{ display:block; width:100%; height:auto; background:#fff; border-radius:4px; margin:6px 0; }
 
 .tz-tabla-wrap{ overflow-x:auto; padding:12px 12px 0; }
 table.tz-tabla{ width:100%; border-collapse:collapse; font:500 15px/1.2 var(--mono); margin:0; }
@@ -228,6 +230,8 @@ const MOTORES = {
   PARI: "el programa de teoría de números (factorizar, primos…)",
   Maxima: "el programa de cálculo simbólico (integrales, límites, ecuaciones…)",
   Pynac: "la biblioteca de expresiones simbólicas de Sage (sumar, expandir, sustituir…)",
+  matplotlib: "la biblioteca de gráficos de Python, que dibuja la imagen",
+  Tachyon: "un programa de trazado de rayos, que hace la foto de un gráfico 3D",
 };
 // Nombres completos de los padres, para la narración
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", SR: "el anillo simbólico" };
@@ -292,6 +296,10 @@ function cierraSageReal(caja, nodo) {
   if (!caja) return;
   if (caja === nodo) caja.innerHTML = ""; else caja.remove();
 }
+// la consola dibuja los gráficos: trazar.py escribe una línea «\u0000img:datos/graficos/…»
+const IMAGEN = "\u0000img:";
+const esImagen = l => l.startsWith(IMAGEN);
+const rutaImagen = l => new URL("../" + l.slice(IMAGEN.length), import.meta.url).href;
 // valores con la escritura de Python: 'texto', True, False, None
 const fmtVal = v => typeof v === "string" ? "'" + v + "'" : v === true ? "True" : v === false ? "False" : v === null ? "None" : String(v);
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -789,10 +797,30 @@ function renderLaboratorio({ model, el }) {
   });
 }
 
+// Un programa que solo puede ejecutar Sage completo (interact, por ejemplo): el código y el botón «Sage real»
+function renderSageReal({ model, el }) {
+  const C = model.get("config") || {};
+  el.innerHTML = "<style>" + ESTILOS + "</style>" +
+    '<div class="tz"><div class="tz-cab"><span class="tz-tit">' + esc(C.titulo || "En Sage real") + '</span><span class="tz-etq">' + esc(C.etiqueta || "Sage real") + "</span></div>" +
+    (C.idea ? '<p class="tz-idea">' + esc(C.idea) + "</p>" : "") +
+    '<div class="tz-caja"><div class="tz-barra negro"><span>Programa</span></div><pre class="tz-codigo-real">' + esc(C.codigo || "") + "</pre></div>" +
+    '<div class="tz-real"></div>' +
+    '<div class="tz-mandos"><button type="button" class="tz-b prim tz-sagereal" aria-expanded="false">Ejecutar en Sage real</button></div></div>';
+  const boton = el.querySelector(".tz-sagereal");
+  let caja = null;
+  boton.addEventListener("click", () => {
+    if (caja) { cierraSageReal(caja, el.querySelector(".tz-real")); caja = null; boton.setAttribute("aria-expanded", "false"); boton.textContent = "Ejecutar en Sage real"; return; }
+    boton.setAttribute("aria-expanded", "true"); boton.textContent = "Cerrar Sage real";
+    caja = abreSageReal(el.querySelector(".tz-real"), C.codigo || "");
+  });
+  return () => { if (caja) cierraSageReal(caja, el.querySelector(".tz-real")); };
+}
+
 function render({ model, el }) {
   const C0 = model.get("config") || {};
   if (C0.tipo === "preguntas") return renderPreguntas({ model, el });
   if (C0.tipo === "laboratorio") return renderLaboratorio({ model, el });
+  if (C0.tipo === "sagereal") return renderSageReal({ model, el });
   const archivo = model.get("archivo");
   if (!model.get("traza") && archivo) {
     // la traza está en su propio archivo JSON (en datos/trazas/): se descarga al abrir la página
@@ -1220,6 +1248,7 @@ function renderTraza({ model, el }) {
     }
     const escrito = p.salida !== prev.salida && !/^(print|for|while|if|elif|else|def|return)\b/.test(txt) && !/^\w+\s*=[^=]/.test(txt)
       ? salida(p.salida).slice(salida(prev.salida).length).join(" ") : "";
+    if (escrito && escrito.includes(IMAGEN)) return "Esta línea no guarda nada en ninguna variable. Su valor es un gráfico, y la consola, como un cuaderno de Sage, no escribe su nombre: lo <b>dibuja</b>.";
     if (escrito) return "Esta línea no guarda nada en ninguna variable. Como en la consola de Sage, se escribe su valor: <code>" + esc(escrito) + "</code>.";
     if (/^for\s/.test(txt) && p.linea !== cab) return "El <code>for</code> no tiene más elementos que recorrer: termina, y el programa sigue por la primera línea de después del bucle.";
     if (/\.seed\(/.test(txt)) return "Se fija la semilla de los números al azar: a partir de aquí, la secuencia que salga será siempre la misma.";
@@ -1345,7 +1374,8 @@ function renderTraza({ model, el }) {
 
     const out = salida(p.salida), nueva = p.salida !== prev.salida;
     q(".tz-consola").innerHTML = out.length
-      ? out.map((l, i) => esc(oculto && nueva && i === out.length - 1 ? "?" : l)).join("\n")
+      ? out.map((l, i) => oculto && nueva && i === out.length - 1 ? "?"
+          : esImagen(l) ? '<img class="tz-img" alt="El gráfico que dibuja Sage" src="' + esc(rutaImagen(l)) + '">' : esc(l)).join("\n")
       : '<span class="pr">(nada todavía)</span>';
 
     const vis = P.slice(0, k + 1).filter(x => x.fila !== null && x.fila !== undefined).map(x => x.fila);

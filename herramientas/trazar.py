@@ -108,7 +108,10 @@ def padre_de(v):
 #    ya lo ve el perfilador.
 METODOS_PARI = {"factor", "is_prime", "next_prime"}
 METODOS_PYNAC = {"expand", "subs", "factor"}
-MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima")]
+MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
+                  # dibujar: Graphics.save pasa por matplotlib (2D); los 3D en PNG, por la interfaz de Tachyon
+                  (re.compile(r"[/\\]matplotlib[/\\]"), "matplotlib"),
+                  (re.compile(r"interfaces[/\\]tachyon"), "Tachyon")]
 
 
 def motor_por_valor(v):
@@ -255,6 +258,26 @@ CODIGO = {"texto": ""}          # el programa que se está trazando (para escrib
 LIMITE = None                   # máximo de pasos; el laboratorio del navegador lo fija para cortar bucles sin fin
 AVISA_SIN_RESPUESTA = False     # el laboratorio: si input() se queda sin respuestas, avisa en vez de devolver ""
 ECO = "__eco_sage__"             # la consola de Sage: cada expresión suelta escribe su valor
+IMAGEN = "\u0000img:"           # en la salida, una línea así es un gráfico dibujado en la consola
+GRAFICOS = {"prefijo": None, "n": 0}   # procesa() dice dónde guardar los gráficos de cada visualizador
+
+
+def es_grafico(v):
+    """Un gráfico de Sage (plot, plot3d…): la consola lo dibuja en vez de escribir su repr."""
+    return type(v).__module__.startswith("sage.plot") and callable(getattr(v, "save", None))
+
+
+def dibuja(v):
+    """Guarda el gráfico como lo enseñaría un cuaderno de Sage y devuelve su ruta (o None)."""
+    if not GRAFICOS["prefijo"]:
+        return None
+    GRAFICOS["n"] += 1
+    tres_d = "plot3d" in type(v).__module__
+    ruta = f"{GRAFICOS['prefijo']}-{GRAFICOS['n']}.{'png' if tres_d else 'svg'}"
+    destino = RAIZ / ruta
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    v.save(str(destino))
+    return ruta
 
 
 class DemasiadosPasos(Exception):
@@ -457,7 +480,8 @@ def ejecuta(codigo, codigo_prep, entradas=()):
     def eco(valor):
         if valor is not None:
             ecos.append(valor)
-            salida.write(repr(valor) + "\n")
+            ruta = dibuja(valor) if es_grafico(valor) else None
+            salida.write((IMAGEN + ruta if ruta else repr(valor)) + "\n")
 
     estado_error = {"propagando": False}
 
@@ -582,6 +606,17 @@ def contexto(ev):
 def traza(codigo, cfg):
     if not MOTOR["nombre"]:
         usa()
+    if MOTOR["nombre"] == "sage":
+        # plot() elige sus puntos con un poco de azar, y matplotlib pone la fecha en los SVG:
+        # con la semilla y la fecha fijas, la misma celda da siempre la misma traza y el mismo dibujo
+        os.environ["SOURCE_DATE_EPOCH"] = "0"
+        try:
+            import matplotlib
+            matplotlib.rcParams["svg.hashsalt"] = "acinstitut"
+        except ImportError:
+            pass
+        MOTOR["base"]["set_random_seed"](0)
+    GRAFICOS["n"] = 0
     lineas = codigo.split("\n")
     codigo_prep = prepara(codigo)
     lineas_prep = codigo_prep.split("\n")
@@ -769,7 +804,7 @@ def procesa(ruta):
     for w in WIDGET.finditer(texto):
         cuerpo = json.loads(w.group(2))
         cfg = cuerpo["config"]
-        if cfg.get("tipo") in ("preguntas", "laboratorio"):
+        if cfg.get("tipo") in ("preguntas", "laboratorio", "sagereal"):
             continue
         cfg.setdefault("mostrar_tipos", True)
         celdas = list(CELDA.finditer(texto, 0, w.start()))
@@ -780,7 +815,12 @@ def procesa(ruta):
         archivo = f"datos/trazas/{Path(ruta).stem}-{hechos}.json"
         destino = RAIZ / archivo
         destino.parent.mkdir(parents=True, exist_ok=True)
-        datos = json.dumps(traza(codigo, cfg), ensure_ascii=False, separators=(",", ":"), default=repr, allow_nan=False)
+        GRAFICOS["prefijo"] = f"datos/graficos/{Path(ruta).stem}-{hechos}"
+        try:
+            resultado = traza(codigo, cfg)
+        finally:
+            GRAFICOS["prefijo"] = None
+        datos = json.dumps(resultado, ensure_ascii=False, separators=(",", ":"), default=repr, allow_nan=False)
         destino.write_text(datos, encoding="utf-8")
         nuevo = json.dumps({"archivo": archivo, "config": cfg}, ensure_ascii=False, separators=(",", ":"))
         trozos += [texto[pos:w.start()], w.group(1), nuevo, "\n"]
