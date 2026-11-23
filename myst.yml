@@ -25,6 +25,9 @@ project:
         - file: capitulos/03-simbolicas.md
         - file: capitulos/04-funciones.md
         - file: capitulos/05-graficos.md
+    - title: Parte II · Cálculo
+      children:
+        - file: capitulos/06-limites.md
 site:
   template: book-theme
   options:
