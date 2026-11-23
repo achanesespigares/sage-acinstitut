@@ -1,0 +1,26 @@
+# Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro · AC Institut
+# Jupyter Book 2 (motor MyST). Construir:  npx myst build --html
+version: 1
+project:
+  id: sage-acinstitut
+  title: Mirar y ver tu código pensar
+  subtitle: Entendiendo SageMath, desde dentro
+  authors:
+    - name: Antonio Chanes Espigares
+  license: CC-BY-NC-SA-4.0
+  github: https://github.com/achanesespigares/achanesespigares-sage-acinstitut
+  exclude:
+    - herramientas/**
+    - README.md
+    - node_modules/**
+    - lab/**
+  toc:
+    - file: index.md
+    - file: capitulos/00-como-leer.md
+    - file: capitulos/laboratorio.md
+site:
+  template: book-theme
+  options:
+    logo_text: ac | institut · Sage
+    style: estilo/ac-institut.css
+    folders: true

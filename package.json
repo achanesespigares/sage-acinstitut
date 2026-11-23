@@ -1,0 +1,16 @@
+{
+  "name": "sage-acinstitut",
+  "version": "0.1.0",
+  "description": "Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro · AC Institut (Jupyter Book 2 / MyST)",
+  "scripts": {
+    "trazas": "python herramientas/trazar.py capitulos/*.md",
+    "conformidad": "python herramientas/conformidad.py",
+    "build": "myst build --html",
+    "start": "myst start"
+  },
+  "license": "CC-BY-NC-SA-4.0",
+  "dependencies": {
+    "mystmd": "1.12.0"
+  },
+  "private": true
+}

@@ -1,0 +1,3 @@
+# espera: aviso
+a = 1.0
+b = a / 0

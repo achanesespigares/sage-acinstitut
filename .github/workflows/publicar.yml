@@ -1,0 +1,55 @@
+# Publica el libro en GitHub Pages en cada push a main.
+# Activa Pages en el repositorio: Settings → Pages → Source: GitHub Actions.
+name: Publicar libro
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      # Si publicas en un dominio propio (p. ej. sage.acinstitut.com), borra esta línea
+      BASE_URL: /${{ github.event.repository.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar MyST (versión fijada en package.json)
+        run: npm ci
+      - name: Construir el libro
+        run: npx myst build --html
+      - name: Copiar las trazas y el laboratorio
+        run: |
+          # las trazas de los visualizadores (las genera trazar.py con Sage de verdad)
+          mkdir -p _build/html/datos
+          cp -r datos/. _build/html/datos/
+          # el laboratorio: el trazador, el mini-Sage y el preparador de Sage
+          mkdir -p _build/html/lab
+          cp herramientas/trazar.py herramientas/laboratorio.py lab/minisage.py lab/preparse_sage.py lab/nombres_sage.json _build/html/lab/
+      - name: Copiar Python (Pyodide) para el laboratorio
+        run: |
+          mkdir -p _build/html/pyodide
+          for f in pyodide.js pyodide.asm.js pyodide.asm.wasm python_stdlib.zip pyodide-lock.json; do
+            curl -sSfL -o _build/html/pyodide/$f https://cdn.jsdelivr.net/pyodide/v0.29.5/full/$f
+          done
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_build/html
+      - id: deployment
+        uses: actions/deploy-pages@v4

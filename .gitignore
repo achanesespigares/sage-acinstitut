@@ -1,0 +1,6 @@
+node_modules/
+_build/
+_templates/
+.sage/
+__pycache__/
+.DS_Store

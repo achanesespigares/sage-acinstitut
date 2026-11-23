@@ -1,0 +1,26 @@
+# El mini-Sage del laboratorio frente a Sage de verdad: cada programa de lab/pruebas/ y de los
+# capítulos se traza con los dos y las trazas se comparan paso a paso. Comprueba también que
+# las trazas publicadas en datos/trazas/ son las que da Sage hoy.
+name: Conformidad del laboratorio
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  comparar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: herramientas/requisitos.txt
+      - name: Instalar Sage (passagemath)
+        run: pip install --prefer-binary -r herramientas/requisitos.txt
+      - name: Comparar el mini-Sage con Sage
+        run: python herramientas/conformidad.py
+      - name: Las trazas de los capítulos están al día
+        run: |
+          python herramientas/trazar.py capitulos/*.md
+          git diff --stat --exit-code datos/trazas capitulos

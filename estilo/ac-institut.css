@@ -1,0 +1,40 @@
+/* AC Institut · piel web del libro (paleta vino; Montserrat en títulos, Arimo en texto, IBM Plex Mono en código) */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700&family=Arimo:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root{ --ac-acento:#7A1F36; --ac-suave:#F6F0EE; --ac-oscuro:#5A1628; --ac-banda:#6B6B6B; --ac-tinta:#111111; }
+
+body{ font-family:"Arimo","Liberation Sans",Arial,sans-serif; }
+h1,h2,h3,h4,.myst-toc,nav{ font-family:"Montserrat","Helvetica Neue",Arial,sans-serif; }
+h1{ font-weight:700; letter-spacing:-.01em; }
+h2{ font-weight:700; }
+article h2::before{ content:""; display:inline-block; width:.45em; height:.45em; background:var(--ac-acento); margin-right:.55em; vertical-align:.12em; }
+code,pre,kbd{ font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+article a{ color:var(--ac-acento); text-decoration-color:color-mix(in srgb,var(--ac-acento) 40%,transparent); }
+article a:hover{ color:var(--ac-oscuro); }
+article p strong{ color:var(--ac-tinta); }
+/* el subtítulo del frontmatter, en el vino de la casa */
+article header .text-lg, .myst-fm-block-subtitle{ color:var(--ac-acento); font-family:"Montserrat",Arial,sans-serif; font-weight:500; }
+/* bloques de cita como la caja «atención» del sistema */
+article blockquote{ border-left:4px solid var(--ac-acento); background:var(--ac-suave); font-style:normal; }
+
+/* ── Las dos rutas: lo marcado «A fondo» lleva su cápsula de tinta, como el HL del IB ── */
+.afondo{ position:relative; border-left:3px solid var(--ac-tinta); padding:.2rem 0 .2rem 1.1rem; margin:1.6rem 0; }
+.afondo::before{ content:"A fondo"; display:inline-block; font:700 11px/1 "Montserrat",Arial,sans-serif; letter-spacing:.04em;
+  color:#fff; background:var(--ac-tinta); border-radius:999px; padding:5px 9px; margin-bottom:.4rem; }
+html.solo-base .afondo{ display:none; }
+html.dark .afondo{ border-left-color:#ede7e9; }
+html.dark .afondo::before{ background:#ede7e9; color:#141012; }
+
+/* El código de las tablas no se parte en dos líneas: si no cabe, la tabla se desplaza */
+table code { white-space: nowrap; }
+
+/* En el móvil, el ¶ de los títulos (sale al pasar el ratón) puede asomar por la derecha y ensanchar la página */
+@media (max-width: 760px){ h1 > a[href^="#"].select-none, h2 > a[href^="#"].select-none, h3 > a[href^="#"].select-none, h4 > a[href^="#"].select-none{ display:none; } }
+/* botones ({button}): en el vino de la casa, como los del visualizador */
+article a.button{ display:inline-flex; align-items:center; gap:.4em; background:var(--ac-acento) !important; color:#fff !important; border:2px solid var(--ac-tinta);
+  border-radius:0; padding:.6em 1.1em; font:600 14px/1 "Montserrat",Arial,sans-serif; text-decoration:none; }
+article a.button:hover{ background:var(--ac-oscuro) !important; }
+article a.button svg{ display:none; }
+
+/* Las tablas anchas (la de los tres lenguajes, en el móvil) se desplazan dentro de su caja, sin ensanchar la página */
+article table { display: block; max-width: 100%; overflow-x: auto; }

@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Si usas este libro, cítalo así."
+title: "Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro"
+type: software
+authors:
+  - family-names: "Chanes Espigares"
+    given-names: "Antonio"
+license: CC-BY-NC-SA-4.0
+url: "https://achanesespigares.github.io/achanesespigares-sage-acinstitut/"
+repository-code: "https://github.com/achanesespigares/achanesespigares-sage-acinstitut"
+keywords: ["SageMath", "Sage", "matemáticas", "programación", "álgebra computacional", "educación", "visualización de código", "Jupyter Book"]
