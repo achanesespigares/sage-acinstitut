@@ -21,6 +21,7 @@ project:
     - title: Parte I · Primeros pasos con Sage
       children:
         - file: capitulos/01-calculadora.md
+        - file: capitulos/02-preparador.md
 site:
   template: book-theme
   options:

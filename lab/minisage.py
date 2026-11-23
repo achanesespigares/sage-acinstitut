@@ -339,10 +339,28 @@ class Integer(_Operaciones):
         no_lo_se("Elevar un entero a una fracción cuando la raíz no es exacta (es simbólica)")
 
     def __rpow__(self, b):
+        if isinstance(b, int):                    # un int de Python elevado a un entero de Sage: cuenta de Python
+            return b ** self._n
         o = _eleva(b)
         if o is None:
             return NotImplemented
         return o ** self
+
+    # Operaciones bit a bit: en Sage, ^^ (el preparador lo pasa a ^ de Python), &, |, << y >>
+    def _bits(self, o, f, al_reves=False):
+        if isinstance(o, bool) or not isinstance(o, (Integer, int)):
+            return NotImplemented
+        a, b = (int(o), self._n) if al_reves else (self._n, int(o))
+        return Integer(f(a, b))
+
+    def __xor__(self, o): return self._bits(o, lambda a, b: a ^ b)
+    def __rxor__(self, o): return self._bits(o, lambda a, b: a ^ b, True)
+    def __and__(self, o): return self._bits(o, lambda a, b: a & b)
+    def __rand__(self, o): return self._bits(o, lambda a, b: a & b, True)
+    def __or__(self, o): return self._bits(o, lambda a, b: a | b)
+    def __ror__(self, o): return self._bits(o, lambda a, b: a | b, True)
+    def __lshift__(self, o): return self._bits(o, lambda a, b: a << b)
+    def __rshift__(self, o): return self._bits(o, lambda a, b: a >> b)
 
     def __neg__(self): return Integer(-self._n)
     def __pos__(self): return self
@@ -977,7 +995,7 @@ class Pendiente:
 
 
 PROPIOS = {
-    "Integer": Integer, "Rational": Rational, "RealNumber": RealNumber, "ZZ": ZZ, "QQ": QQ, "RR": RR,
+    "preparse": preparse, "Integer": Integer, "Rational": Rational, "RealNumber": RealNumber, "ZZ": ZZ, "QQ": QQ, "RR": RR,
     "IntegerRing": IntegerRing, "RationalField": RationalField, "parent": parent,
     "factor": factor, "is_prime": is_prime, "next_prime": next_prime, "previous_prime": previous_prime,
     "divisors": divisors, "factorial": factorial, "binomial": binomial, "gcd": gcd, "lcm": lcm,
