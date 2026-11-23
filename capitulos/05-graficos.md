@@ -189,5 +189,5 @@ La parábola de `x^2 - 1` corta el eje *x* en dos puntos, y en el dibujo se ven:
 ::::{div}
 :class: afondo
 7. `show(plot(a*sin(x), (x, 0, 2*pi), ymin=-2, ymax=2))`. `a` estira o encoge la onda en vertical: es su **amplitud**. Con `a` negativo, la onda se da la vuelta.
-8. Nada: no devuelve ningún valor. El archivo queda en la carpeta en la que trabaja Sage (en SageMathCell, aparece como un enlace para descargarlo).
+8. Nada: `save` no devuelve ningún valor, así que la consola no escribe nada. El archivo queda en la carpeta en la que trabaja Sage, con el formato que dice la extensión: aquí, SVG.
 ::::
