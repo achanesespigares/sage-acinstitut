@@ -876,6 +876,26 @@ def sqrt(x):
     no_lo_se("La raíz de una fracción (puede ser simbólica)")
 
 
+def floor(x):
+    if isinstance(x, (int, bool)):
+        return Integer(x)
+    if isinstance(x, Elemento):
+        return x.floor()
+    if isinstance(x, float):
+        return Integer(math.floor(x))
+    no_lo_se("floor() de algo que no es un número")
+
+
+def ceil(x):
+    if isinstance(x, (int, bool)):
+        return Integer(x)
+    if isinstance(x, Elemento):
+        return x.ceil()
+    if isinstance(x, float):
+        return Integer(math.ceil(x))
+    no_lo_se("ceil() de algo que no es un número")
+
+
 def srange(a, b=None, step=1):
     if b is None:
         a, b = 0, a
@@ -962,7 +982,7 @@ PROPIOS = {
     "factor": factor, "is_prime": is_prime, "next_prime": next_prime, "previous_prime": previous_prime,
     "divisors": divisors, "factorial": factorial, "binomial": binomial, "gcd": gcd, "lcm": lcm,
     "n": n, "N": N, "numerical_approx": numerical_approx, "sqrt": sqrt, "srange": srange,
-    "ellipsis_range": ellipsis_range, "ellipsis_iter": ellipsis_iter, "sum": sum, "round": round,
+    "ellipsis_range": ellipsis_range, "ellipsis_iter": ellipsis_iter, "sum": sum, "round": round, "floor": floor, "ceil": ceil,
 }
 
 

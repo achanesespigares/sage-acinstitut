@@ -137,6 +137,15 @@ def llamadas_pari(texto_prep, ctx):
 
 
 ARITMETICA = (ast.BinOp, ast.UnaryOp, ast.AugAssign)
+APROXIMAR = {"n", "N", "numerical_approx"}
+
+
+def es_aproximar(nodo):
+    """Una llamada a n(), N() o numerical_approx(), como función o como método: pasar a RR es cosa de MPFR."""
+    if not isinstance(nodo, ast.Call):
+        return False
+    f = nodo.func
+    return (isinstance(f, ast.Name) and f.id in APROXIMAR) or (isinstance(f, ast.Attribute) and f.attr in APROXIMAR)
 
 
 def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
@@ -149,7 +158,7 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
         motores.append("PARI")
     try:
         arbol = ast.parse(texto_prep.strip())
-        opera = any(isinstance(n, ARITMETICA) for n in ast.walk(arbol))
+        opera = any(isinstance(n, ARITMETICA) or es_aproximar(n) for n in ast.walk(arbol))
     except SyntaxError:
         opera = False
     if opera and not motores:

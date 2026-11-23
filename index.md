@@ -22,11 +22,11 @@ Elige aquí tu ruta. La elección se recuerda en todo el libro, y puedes cambiar
 
 ## Lo que hay ahora
 
-El libro acaba de empezar. Ya puedes leer [Cómo leer este libro](capitulos/00-como-leer.md), con un primer visualizador, y probar el [laboratorio](capitulos/laboratorio.md): escribe tu propio programa de Sage y míralo ejecutarse paso a paso, aquí mismo, en el navegador, o pásalo a Sage completo con un botón. El plan completo (en negrita, lo que ya está escrito):
+El libro acaba de empezar. Ya puedes leer [Cómo leer este libro](capitulos/00-como-leer.md) y el primer capítulo, [Sage como calculadora exacta](capitulos/01-calculadora.md), y probar el [laboratorio](capitulos/laboratorio.md): escribe tu propio programa de Sage y míralo ejecutarse paso a paso, aquí mismo, en el navegador, o pásalo a Sage completo con un botón. El plan completo (en negrita, lo que ya está escrito):
 
 | Parte | Capítulos |
 |---|---|
-| I · Primeros pasos | Sage como calculadora exacta · El preparador · Variables simbólicas y expresiones · Funciones · Gráficos en 2D y 3D |
+| I · Primeros pasos | **[Sage como calculadora exacta](capitulos/01-calculadora.md)** · El preparador · Variables simbólicas y expresiones · Funciones · Gráficos en 2D y 3D |
 | II · Cálculo | Límites y continuidad · Derivadas · Integrales exactas y numéricas · Series, Taylor y sumas · Ecuaciones y sistemas · Ecuaciones diferenciales |
 | III · Álgebra lineal | Vectores y matrices sobre ℚ, ℝ y GF(p) · Sistemas, rango y Gauss paso a paso · Determinantes e inversas · Núcleo, imagen y bases · Autovalores, diagonalización y Jordan |
 | IV · Números y estructuras | Primos, mcd y congruencias · Polinomios y anillos · Combinatoria y probabilidad · Grafos |

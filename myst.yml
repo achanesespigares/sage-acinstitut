@@ -18,6 +18,9 @@ project:
     - file: index.md
     - file: capitulos/00-como-leer.md
     - file: capitulos/laboratorio.md
+    - title: Parte I · Primeros pasos con Sage
+      children:
+        - file: capitulos/01-calculadora.md
 site:
   template: book-theme
   options:
