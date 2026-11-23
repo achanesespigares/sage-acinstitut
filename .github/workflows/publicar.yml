@@ -16,11 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publicar:
+  construir:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     env:
       # Si publicas en un dominio propio (p. ej. sage.acinstitut.com), borra esta línea
       BASE_URL: /${{ github.event.repository.name }}
@@ -51,5 +48,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./_build/html
+
+  # Publicar en un trabajo aparte, como en la plantilla oficial de GitHub: con la subida y la
+  # publicación en el mismo trabajo, deploy-pages a veces no encontraba el artefacto recién subido.
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
