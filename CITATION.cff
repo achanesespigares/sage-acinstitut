@@ -6,6 +6,6 @@ authors:
   - family-names: "Chanes Espigares"
     given-names: "Antonio"
 license: CC-BY-NC-SA-4.0
-url: "https://achanesespigares.github.io/achanesespigares-sage-acinstitut/"
-repository-code: "https://github.com/achanesespigares/achanesespigares-sage-acinstitut"
+url: "https://achanesespigares.github.io/sage-acinstitut/"
+repository-code: "https://github.com/achanesespigares/sage-acinstitut"
 keywords: ["SageMath", "Sage", "matemáticas", "programación", "álgebra computacional", "educación", "visualización de código", "Jupyter Book"]

@@ -8,7 +8,7 @@ project:
   authors:
     - name: Antonio Chanes Espigares
   license: CC-BY-NC-SA-4.0
-  github: https://github.com/achanesespigares/achanesespigares-sage-acinstitut
+  github: https://github.com/achanesespigares/sage-acinstitut
   exclude:
     - herramientas/**
     - README.md
