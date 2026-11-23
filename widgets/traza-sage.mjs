@@ -946,7 +946,8 @@ function renderTraza({ model, el }) {
       const quien = quienLlama(txt0);
       const recibe = Object.keys(p.estado).filter(n => !igual(p.estado[n], prev.estado[n]));
       return "La lambda devuelve " + esc(p.devuelve.valor) + (quien ? ": " + PAPEL[quien] + "." : ".") +
-        (recibe.length ? " Ya no quedan elementos: " + (quien ? "<code>" + quien + "</code>" : "la función") + " termina y el resultado se guarda en <code>" + recibe[0] + "</code>." : "");
+        (!recibe.length ? "" : quien ? " Ya no quedan elementos: <code>" + quien + "</code> termina y el resultado se guarda en <code>" + recibe[0] + "</code>."
+          : " Su marco desaparece y el resultado se guarda en <code>" + recibe[0] + "</code>.");
     }
     if (p.devuelve && p.devuelve.funcion.endsWith(".__init__")) {
       const recibe = Object.keys(p.estado).filter(n => !igual(p.estado[n], prev.estado[n]) && esObj(p.estado[n]));
@@ -1183,7 +1184,7 @@ function renderTraza({ model, el }) {
       const lee = p.lee && p.foco !== null ? " Para ello se consulta la casilla " + p.foco + " de la lista, que vale " + fmtVal(p.estado[lista][p.foco]) + "." : "";
       const tp = p.tipos && p.tipos[n], completo = p.padres && p.padres[n];
       const tipo = C.mostrar_tipos === false || !tp ? ""
-        : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : "") + " (<i>" + esc(completo) + "</i>)"
+        : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : / ↦ SR$/.test(tp) ? ", las funciones simbólicas que dan una expresión de SR" : "") + " (<i>" + esc(completo) + "</i>)"
         : esDePython(tp) ? ", un <code>" + esc(tp) + "</code> de Python, no de Sage" : " (<code>" + esc(tp) + "</code>)";
       const otras = cambios.length > 1 ? " También cambia <code>" + cambios.slice(1).join("</code>, <code>") + "</code>." : "";
       if (esObj(p.estado[n]) && esObj(a) && a.__obj__ === p.estado[n].__obj__) {

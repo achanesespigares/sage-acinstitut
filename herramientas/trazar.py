@@ -67,7 +67,10 @@ CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Real Field with 53 bits of precision$", "RR"), (r"^Real Field with (\d+) bits of precision$", r"RealField(\1)"),
           (r"^Symbolic Ring$", "SR"), (r"^Finite Field of size (\d+)$", r"GF(\1)"),
           (r"^Ring of integers modulo (\d+)$", r"Zmod(\1)"), (r"^Complex Field with 53 bits of precision$", "CC"),
-          (r"^Real Double Field$", "RDF")]
+          (r"^Real Double Field$", "RDF"),
+          # f(x) = x^2: Sage escribe la función como «x |--> x^2»; la etiqueta corta del libro lo imita
+          (r"^Callable function ring with argument (\w+)$", r"\1 ↦ SR"),
+          (r"^Callable function ring with arguments (\(.*\))$", r"\1 ↦ SR")]
 
 
 def padre_de(v):
@@ -114,13 +117,13 @@ def motor_por_valor(v):
         return "GMP"
     if corto == "RR" or corto.startswith("RealField("):
         return "MPFR"
-    if corto == "SR":
+    if corto == "SR" or corto.endswith("↦ SR"):
         return "Pynac"
     return None
 
 
 def llamadas_pynac(texto_prep, ctx):
-    """¿La línea expande, sustituye o factoriza una expresión de SR, o la llama con p(x=…)?"""
+    """¿La línea expande, sustituye o factoriza una expresión de SR, o la llama (p(x=…), f(2))?"""
     try:
         arbol = ast.parse(texto_prep.strip())
     except SyntaxError:
@@ -133,15 +136,14 @@ def llamadas_pynac(texto_prep, ctx):
             objeto = f.value
         elif isinstance(f, ast.Name) and f.id in METODOS_PYNAC and n.args:
             objeto = n.args[0]
-        elif n.keywords and not n.args:
-            objeto = f                            # p(x=2): sustituir llamando a la expresión
         else:
-            continue
+            objeto = f                            # p(x=2) o f(2): llamar a una expresión es sustituir
         try:
             v = eval(compile(ast.Expression(objeto), "", "eval"), entorno(), dict(ctx))
         except Exception:
             continue
-        if padre_de(v)[0] == "SR":
+        corto = padre_de(v)[0]
+        if corto == "SR" or corto.endswith("↦ SR"):
             return True
     return False
 
@@ -169,6 +171,19 @@ def llamadas_pari(texto_prep, ctx):
         if padre_de(v)[0] == "ZZ":
             return True
     return False
+
+
+def cuenta_devuelta(texto_prep):
+    """La expresión que devuelve una línea: lo que sigue a return, o el cuerpo de una lambda."""
+    t = texto_prep.strip()
+    if t.startswith("return"):
+        return t[len("return"):].strip() or None
+    try:
+        arbol = ast.parse(t)
+    except SyntaxError:
+        return None
+    lambdas = [n for n in ast.walk(arbol) if isinstance(n, ast.Lambda)]
+    return ast.unparse(lambdas[0].body) if len(lambdas) == 1 else None
 
 
 ARITMETICA = (ast.BinOp, ast.UnaryOp, ast.AugAssign)
@@ -498,6 +513,7 @@ def ejecuta(codigo, codigo_prep, entradas=()):
                             "local": foto(frame.f_locals) if es_funcion else {}, "pila": pila, "compr": foto(compr),
                             "marco": nombre_de(frame.f_code), "funcion": es_funcion,
                             "retorno": marca(arg, numeros) if (evento == "return" and es_funcion and not por_error) else None,
+                            "retorno_real": copia(arg) if (evento == "return" and es_funcion and not por_error) else None,
                             "por_error": por_error, "pausa": pausa, "salida": salida.getvalue(), "perfil": []})
         return tracer
 
@@ -648,8 +664,11 @@ def traza(codigo, cfg):
                     expr = texto[len(clave):].rstrip(":").strip()
                     expr_prep = texto_prep[len(clave):].rstrip(":").strip()
                     antes = contexto(ejec)
-                    cond = {"expr": expr, "sust": sustituye(expr, antes),
-                            "valor": bool(eval(expr_prep, dict(ENT), dict(antes)))}
+                    try:
+                        valor = bool(eval(expr_prep, dict(ENT), dict(antes)))
+                    except Exception:             # la condición misma falla: el error lo cuenta el paso
+                        break
+                    cond = {"expr": expr, "sust": sustituye(expr, antes), "valor": valor}
 
         compr = None
         nodo = comprension(texto_prep) if devuelve is None else None
@@ -725,6 +744,14 @@ def traza(codigo, cfg):
             motor = quien_calcula(texto_prep, ejec.get("perfil", []), cambiados, contexto(ejec))
             if motor:
                 paso["motor"] = motor
+        elif devuelve is not None and not devuelve["error"]:
+            # return n^2 + 1, o lambda t: t^2 + 1: la cuenta se hace al volver, y el valor devuelto
+            # dice quién la hizo
+            cuenta = cuenta_devuelta(texto_prep)
+            if cuenta:
+                motor = quien_calcula(cuenta, ejec.get("perfil", []), [ejec["retorno_real"]], contexto(ejec))
+                if motor:
+                    paso["motor"] = motor
         if compr:
             paso["compr"] = compr
         pasos.append(paso)
