@@ -247,8 +247,9 @@ const MOTORES = {
 // En la narración, una matriz (varias líneas) va en un bloque, con sus filas enteras
 function vNar(v) { return /\n/.test(v) ? '<code class="tz-matnar">' + esc(v) + "</code>" : esc(v); }
 function nombrePadre(b) {
-  const m = /^GF\((\d+)\)$/.exec(b), c = /^ComplexField\((\d+)\)$/.exec(b);
-  return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : c ? "los complejos con " + c[1] + " bits de precisión" : b);
+  const m = /^GF\((\d+)\)$/.exec(b), c = /^ComplexField\((\d+)\)$/.exec(b), z = /^Zmod\((\d+)\)$/.exec(b);
+  return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : c ? "los complejos con " + c[1] + " bits de precisión"
+    : z ? "los restos módulo " + z[1] : b);
 }
 // QQ^3: vectores de 3 componentes; Mat(2×2, QQ): matrices de 2 filas y 2 columnas
 function descPadreCompuesto(tp) {
@@ -261,12 +262,13 @@ function descPadreCompuesto(tp) {
     + (m[4] ? " (Sage solo guarda las casillas que no son 0)" : "");
   m = /^(.+)\[(\w+)\]$/.exec(tp);
   if (m) return ", los polinomios en " + m[2] + " con coeficientes en " + nombrePadre(m[1]);
-  m = /^(GF|ComplexField)\((\d+)\)$/.exec(tp);
+  m = /^(GF|ComplexField|Zmod)\((\d+)\)$/.exec(tp);
   if (m) return ", " + nombrePadre(tp);
   return "";
 }
 // Valores que son espacios vectoriales (no viven en un padre: lo son)
-const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subespacio vectorial: Sage guarda su dimensión y una base" };
+const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subespacio vectorial: Sage guarda su dimensión y una base",
+  anillo: "un anillo: un padre, con su suma y su producto, del que salen elementos como R(3)" };
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico",
   QQbar: "los números algebraicos: raíces de polinomios con coeficientes racionales, guardadas de forma exacta",
   AA: "los números algebraicos reales: raíces reales de polinomios con coeficientes racionales, guardadas de forma exacta" };

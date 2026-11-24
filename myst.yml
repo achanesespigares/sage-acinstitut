@@ -40,6 +40,9 @@ project:
         - file: capitulos/14-determinantes.md
         - file: capitulos/15-nucleo.md
         - file: capitulos/16-autovalores.md
+    - title: Parte IV · Números y estructuras
+      children:
+        - file: capitulos/17-primos.md
 site:
   template: book-theme
   options:

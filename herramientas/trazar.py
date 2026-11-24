@@ -115,6 +115,14 @@ def padre_de(v):
             return ("espacio" if v.is_ambient() else "subespacio"), str(v).split("\n")[0]
     except Exception:
         pass
+    # Un anillo como Zmod(7) o GF(5), guardado en una variable, también es un padre
+    try:
+        from sage.categories.rings import Rings
+        from sage.structure.parent import Parent
+        if isinstance(v, Parent) and v in Rings():
+            return "anillo", str(v).split("\n")[0]
+    except Exception:
+        pass
     p = getattr(v, "parent", None)
     if callable(p):
         try:
@@ -140,7 +148,11 @@ def padre_de(v):
 #    racional (g_factor) las hace Pynac. Si factor() no es racional, va a Maxima, y eso
 #    ya lo ve el perfilador. diff() y derivative() de una expresión acaban en
 #    Expression._derivative, que llama a self._gobj.diff: también Pynac.
-METODOS_PARI = {"factor", "is_prime", "next_prime"}
+METODOS_PARI = {"factor", "is_prime", "next_prime", "fibonacci"}
+#  · fibonacci(n): algorithm='pari' por defecto, la función fibo de PARI (combinat.py).
+#  · gcd, xgcd, lcm e inverse_mod de enteros de Sage: acaban en Integer._gcd (mpz_gcd),
+#    Integer._xgcd (mpz_gcdext), Integer._lcm (mpz_lcm) e Integer.inverse_mod (mpz_invert): GMP.
+FUNCIONES_GMP = {"gcd", "xgcd", "lcm", "inverse_mod"}
 METODOS_PYNAC = {"expand", "subs", "factor", "diff", "derivative", "differentiate"}
 MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   # dibujar: Graphics.save pasa por matplotlib (2D); los 3D en PNG, por la interfaz de Tachyon
@@ -218,7 +230,9 @@ def llamadas_pari(texto_prep, ctx):
         if not isinstance(n, ast.Call):
             continue
         f = n.func
-        if isinstance(f, ast.Attribute) and f.attr in METODOS_PARI:
+        if n.keywords:                     # fibonacci(n, algorithm=...) ya no es seguro PARI
+            continue
+        if isinstance(f, ast.Attribute) and f.attr in METODOS_PARI and f.attr != "fibonacci":
             objeto = f.value
         elif isinstance(f, ast.Name) and f.id in METODOS_PARI and n.args:
             objeto = n.args[0]
@@ -229,6 +243,31 @@ def llamadas_pari(texto_prep, ctx):
         except Exception:
             continue
         if padre_de(v)[0] == "ZZ":
+            return True
+    return False
+
+
+def llamadas_gmp(texto_prep, ctx):
+    """¿La línea llama a gcd, xgcd, lcm o inverse_mod con enteros de Sage? (todo ZZ: GMP)"""
+    try:
+        arbol = ast.parse(texto_prep.strip())
+    except SyntaxError:
+        return False
+    for n in ast.walk(arbol):
+        if not isinstance(n, ast.Call) or n.keywords:
+            continue
+        f = n.func
+        if isinstance(f, ast.Name) and f.id in FUNCIONES_GMP and len(n.args) == 2:
+            partes = n.args
+        elif isinstance(f, ast.Attribute) and f.attr in FUNCIONES_GMP and len(n.args) == 1:
+            partes = [f.value] + n.args
+        else:
+            continue
+        try:
+            vals = [eval(compile(ast.Expression(a), "", "eval"), entorno(), dict(ctx)) for a in partes]
+        except Exception:
+            continue
+        if all(padre_de(v)[0] == "ZZ" for v in vals):
             return True
     return False
 
@@ -310,6 +349,8 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
             motores.append(m)
     if llamadas_pari(texto_prep, ctx_antes) and "PARI" not in motores:
         motores.append("PARI")
+    if llamadas_gmp(texto_prep, ctx_antes) and "GMP" not in motores:
+        motores.append("GMP")
     m = llamadas_matrices(texto_prep, ctx_antes)
     if m and m not in motores:
         motores.append(m)
