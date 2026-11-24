@@ -30,6 +30,7 @@ project:
         - file: capitulos/06-limites.md
         - file: capitulos/07-derivadas.md
         - file: capitulos/08-integrales.md
+        - file: capitulos/09-series.md
 site:
   template: book-theme
   options:
