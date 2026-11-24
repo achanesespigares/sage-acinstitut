@@ -88,6 +88,10 @@ def corto_de(completo):
     m = re.match(r"^(?:Vector space of dimension|Ambient free module of rank) (\d+) over (?:the principal ideal domain )?(.+)$", completo)
     if m:
         return f"{corto_de(m.group(2))}^{m.group(1)}"
+    # Un subespacio (el núcleo, por ejemplo): «Vector space of degree 3 and dimension 1 over …», con su base detrás
+    m = re.match(r"^Vector space of degree (\d+) and dimension (\d+) over ([^\n]+)", completo)
+    if m:
+        return f"⊂ {corto_de(m.group(3))}^{m.group(1)}"
     m = re.match(r"^Full MatrixSpace of (\d+) by (\d+) dense matrices over (.+)$", completo)
     if m:
         return f"Mat({m.group(1)}×{m.group(2)}, {corto_de(m.group(3))})"
@@ -104,7 +108,7 @@ def padre_de(v):
             P = p()
             if isinstance(P, type):                # algunos objetos devuelven una clase: no es un padre
                 return type(v).__name__, None
-            completo = str(P)
+            completo = str(P).split("\n")[0]   # un subespacio añade su base en otras líneas
             return corto_de(completo), completo
         except Exception:
             pass
@@ -138,12 +142,14 @@ MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
 FUNCIONES_GSL = {"numerical_integral"}
 
 
-def motor_por_valor(v, multiplica=False):
+def motor_por_valor(v, multiplica=False, principal=True):
     # Matrices y vectores: lo dice el código de Sage (véase la hoja de ruta). Las matrices
     # densas de ZZ y QQ son de FLINT (fmpz_mat_mul, fmpq_mat_add, _multiply_flint); las de
     # GF(p) pequeño multiplican con LinBox (linbox_matrix_matrix_multiply → fgemm de
     # FFLAS-FFPACK), pero suman con un bucle propio; los vectores de ZZ y QQ, con GMP (mpq_add).
     clase = type(v).__name__
+    if clase.startswith(("Matrix_", "Vector_", "FreeModuleElement")) and not principal:
+        return None
     if clase in ("Matrix_integer_dense", "Matrix_rational_dense"):
         return "FLINT"
     if clase.startswith("Matrix_modn_dense"):
@@ -261,13 +267,19 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
         en_indices = {id(m) for s in ast.walk(arbol) if isinstance(s, ast.Subscript) for m in ast.walk(s.slice)}
         opera = any((isinstance(n, ARITMETICA) or es_aproximar(n)) and id(n) not in en_indices
                     for n in ast.walk(arbol))
-        multiplica = any(isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Mult, ast.Pow)) and id(n) not in en_indices
-                         for n in ast.walk(arbol))
+        # Para matrices y vectores, la cuenta tiene que ser la operación principal de la línea
+        # (C = A*B, w = u + v): crear una matriz con un -1 dentro o llamar a rescale_row(2, -1/7)
+        # no es una cuenta de FLINT ni de LinBox.
+        orden = arbol.body[0] if arbol.body else None
+        valor = orden.value if isinstance(orden, (ast.Assign, ast.AugAssign, ast.Expr)) else None
+        principal = isinstance(orden, ast.AugAssign) or isinstance(valor, (ast.BinOp, ast.UnaryOp))
+        multiplica = principal and (isinstance(orden, ast.AugAssign) and isinstance(orden.op, (ast.Mult, ast.Pow))
+                                    or isinstance(valor, ast.BinOp) and isinstance(valor.op, (ast.Mult, ast.Pow)))
     except SyntaxError:
-        opera = multiplica = False
+        opera = multiplica = principal = False
     if opera and not motores:
         for v in nuevos:
-            m = motor_por_valor(v, multiplica)
+            m = motor_por_valor(v, multiplica, principal)
             if m and m not in motores:
                 motores.append(m)
     return motores

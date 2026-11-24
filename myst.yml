@@ -36,6 +36,7 @@ project:
     - title: Parte III · Álgebra lineal
       children:
         - file: capitulos/12-matrices.md
+        - file: capitulos/13-gauss.md
 site:
   template: book-theme
   options:

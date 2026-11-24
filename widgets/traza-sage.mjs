@@ -249,7 +249,9 @@ function vNar(v) { return /\n/.test(v) ? '<code class="tz-matnar">' + esc(v) + "
 function nombrePadre(b) { const m = /^GF\((\d+)\)$/.exec(b); return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : b); }
 // QQ^3: vectores de 3 componentes; Mat(2×2, QQ): matrices de 2 filas y 2 columnas
 function descPadreCompuesto(tp) {
-  let m = /^(.+)\^(\d+)$/.exec(tp);
+  let m = /^⊂ (.+)\^(\d+)$/.exec(tp);
+  if (m) return ", un subespacio de los vectores de " + m[2] + " componentes en " + nombrePadre(m[1]);
+  m = /^(.+)\^(\d+)$/.exec(tp);
   if (m) return ", los vectores de " + m[2] + " componentes en " + nombrePadre(m[1]);
   m = /^Mat\((\d+)×(\d+), (.+)\)$/.exec(tp);
   if (m) return ", las matrices de " + m[1] + "×" + m[2] + " con entradas en " + nombrePadre(m[3]);
@@ -1292,7 +1294,8 @@ function renderTraza({ model, el }) {
     const arr0 = p.estado[lista], arr = casillasDe(arr0);
     const foco = saleDelBucle(p, sig) ? null : p.foco;
     if (C.matriz) {
-      const m = p.estado[C.matriz], fi = p.estado[C.fila], co = p.estado[C.col];
+      const entero = v => typeof v === "number" ? v : v && /^-?\d+$/.test(v.__txt__) ? Number(v.__txt__) : NaN;  // los enteros de Sage llegan como texto
+      const m = p.estado[C.matriz], fi = entero(p.estado[C.fila]), co = entero(p.estado[C.col]);
       const ok = Array.isArray(m) && Number.isInteger(fi) && fi >= 0 && fi < m.length && Array.isArray(m[fi]) && Number.isInteger(co) && co >= 0 && co < m[fi].length && !saleDelBucle(p, sig);
       q(".tz-matriz").innerHTML = !Array.isArray(m) ? '<tr><td class="tz-vacio" style="border:0;width:auto">Todavía no existe.</td></tr>'
         : "<tr><th></th>" + (m[0] || []).map((_, j) => "<th>" + j + "</th>").join("") + "</tr>" + m.map((fila, i) => "<tr><th>" + i + "</th>" + (Array.isArray(fila) ? fila : [fila]).map((v, j) =>
