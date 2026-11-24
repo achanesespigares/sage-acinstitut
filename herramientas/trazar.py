@@ -602,7 +602,17 @@ def error_del_alumno(e, tb):
     """El traceback solo con las líneas del programa del alumno: lo de dentro de Sage
     (o del mini-Sage) no le dice nada y cambia de una versión a otra."""
     te = traceback.TracebackException(type(e), e, tb)
-    te.stack = traceback.StackSummary.from_list([f for f in te.stack if f.filename == ARCHIVO])
+    # También las excepciones encadenadas («During handling of the above exception…»): las que
+    # nacen dentro de Sage (sum divergente: un RuntimeError de ECL) no tienen ninguna línea del
+    # alumno y llevan rutas de la instalación, así que se quitan de la cadena.
+    actual = te
+    while actual is not None:
+        actual.stack = traceback.StackSummary.from_list([f for f in actual.stack if f.filename == ARCHIVO])
+        for enlace in ("__cause__", "__context__"):
+            previa = getattr(actual, enlace)
+            if previa is not None and not any(f.filename == ARCHIVO for f in previa.stack):
+                setattr(actual, enlace, None)
+        actual = actual.__cause__ or actual.__context__
     return "".join(te.format())
 
 
