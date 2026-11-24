@@ -220,6 +220,32 @@ def llamadas_pari(texto_prep, ctx):
     return False
 
 
+def llamadas_matrices(texto_prep, ctx):
+    """Determinante e inversa de una matriz, según el código de Sage 10.8: en ZZ y QQ, FLINT
+    (determinant e inverse: «None: (default) uses flint»); en GF(p) con p > 2 primo, LinBox
+    (determinant llama a linbox_det)."""
+    try:
+        arbol = ast.parse(texto_prep.strip())
+    except SyntaxError:
+        return None
+    for n in ast.walk(arbol):
+        if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and not n.args and not n.keywords
+                and n.func.attr in ("det", "determinant", "inverse")):
+            continue
+        try:
+            v = eval(compile(ast.Expression(n.func.value), "", "eval"), entorno(), dict(ctx))
+        except Exception:
+            continue
+        clase = type(v).__name__
+        if clase == "Matrix_rational_dense" or clase == "Matrix_integer_dense" and n.func.attr != "inverse":
+            return "FLINT"
+        if clase.startswith("Matrix_modn_dense") and n.func.attr != "inverse":
+            p = v.base_ring().characteristic()
+            if p > 2 and p.is_prime():
+                return "LinBox"
+    return None
+
+
 def cuenta_devuelta(texto_prep):
     """La expresión que devuelve una línea: lo que sigue a return, o el cuerpo de una lambda."""
     t = texto_prep.strip()
@@ -253,6 +279,9 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
             motores.append(m)
     if llamadas_pari(texto_prep, ctx_antes) and "PARI" not in motores:
         motores.append("PARI")
+    m = llamadas_matrices(texto_prep, ctx_antes)
+    if m and m not in motores:
+        motores.append(m)
     try:
         if any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in FUNCIONES_GSL
                for n in ast.walk(ast.parse(texto_prep.strip()))) and "GSL" not in motores:

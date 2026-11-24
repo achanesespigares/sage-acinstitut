@@ -37,6 +37,7 @@ project:
       children:
         - file: capitulos/12-matrices.md
         - file: capitulos/13-gauss.md
+        - file: capitulos/14-determinantes.md
 site:
   template: book-theme
   options:

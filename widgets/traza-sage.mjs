@@ -240,7 +240,7 @@ const MOTORES = {
   SymPy: "la biblioteca de cálculo simbólico de Python, a la que Sage pregunta cuando Maxima no puede",
   SciPy: "la biblioteca científica de Python, que busca raíces con números (método de Brent)",
   FLINT: "la biblioteca de teoría de números rápida, que guarda y opera las matrices de enteros y fracciones",
-  LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p)",
+  LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p) y calcula sus determinantes",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
