@@ -42,6 +42,13 @@ def usa(nombre=None):
             warnings.filterwarnings("ignore")
             import sage.all as S
             from sage.repl.preparse import preparse
+            # Maxima y SymPy se cargan la primera vez que hacen falta, y cargar un módulo ejecuta su
+            # código: el perfilador lo vería como un cálculo. Se cargan ya, antes de trazar nada.
+            for modulo in ("sage.interfaces.maxima_lib", "sage.interfaces.sympy", "sympy"):
+                try:
+                    __import__(modulo)
+                except ImportError:
+                    pass
             MOTOR.update(nombre="sage", base=dict(vars(S)), preparse=preparse)
             return MOTOR
         except ImportError:
@@ -66,7 +73,7 @@ def prepara(texto):
 CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Real Field with 53 bits of precision$", "RR"), (r"^Real Field with (\d+) bits of precision$", r"RealField(\1)"),
           (r"^Symbolic Ring$", "SR"), (r"^Finite Field of size (\d+)$", r"GF(\1)"),
-          (r"^Ring of integers modulo (\d+)$", r"Zmod(\1)"), (r"^Complex Field with 53 bits of precision$", "CC"),
+          (r"^Ring of integers modulo (\d+)$", r"Zmod(\1)"), (r"^Complex Field with 53 bits of precision$", "CC"), (r"^Complex Field with (\d+) bits of precision$", r"ComplexField(\1)"),
           (r"^Real Double Field$", "RDF"),
           # f(x) = x^2: Sage escribe la función como «x |--> x^2»; la etiqueta corta del libro lo imita
           (r"^Callable function ring with argument (\w+)$", r"\1 ↦ SR"),
@@ -112,15 +119,20 @@ METODOS_PYNAC = {"expand", "subs", "factor", "diff", "derivative", "differentiat
 MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   # dibujar: Graphics.save pasa por matplotlib (2D); los 3D en PNG, por la interfaz de Tachyon
                   (re.compile(r"[/\\]matplotlib[/\\]"), "matplotlib"),
-                  (re.compile(r"interfaces[/\\]tachyon"), "Tachyon")]
+                  (re.compile(r"interfaces[/\\]tachyon"), "Tachyon"),
+                  # integrate() prueba con Maxima; si no puede, con Giac (si está) y con SymPy
+                  (re.compile(r"giac"), "Giac"),
+                  (re.compile(r"[/\\]sympy[/\\]"), "SymPy")]
+# numerical_integral: «ALGORITHM: Uses calls to the GSL (GNU Scientific Library) C library»
+FUNCIONES_GSL = {"numerical_integral"}
 
 
 def motor_por_valor(v):
     corto, _ = padre_de(v)
     if corto in ("ZZ", "QQ"):
         return "GMP"
-    if corto == "RR" or corto.startswith("RealField("):
-        return "MPFR"
+    if corto in ("RR", "CC") or corto.startswith(("RealField(", "ComplexField(")):
+        return "MPFR"                          # CC es sage.rings.complex_mpfr: dos números de MPFR
     if corto == "SR" or corto.endswith("↦ SR"):
         return "Pynac"
     return None
@@ -210,6 +222,12 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
             motores.append(m)
     if llamadas_pari(texto_prep, ctx_antes) and "PARI" not in motores:
         motores.append("PARI")
+    try:
+        if any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in FUNCIONES_GSL
+               for n in ast.walk(ast.parse(texto_prep.strip()))) and "GSL" not in motores:
+            motores.append("GSL")
+    except SyntaxError:
+        pass
     if not motores and llamadas_pynac(texto_prep, ctx_antes):
         motores.append("Pynac")
     try:

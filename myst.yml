@@ -29,6 +29,7 @@ project:
       children:
         - file: capitulos/06-limites.md
         - file: capitulos/07-derivadas.md
+        - file: capitulos/08-integrales.md
 site:
   template: book-theme
   options:

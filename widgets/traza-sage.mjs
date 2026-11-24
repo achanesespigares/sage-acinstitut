@@ -232,9 +232,12 @@ const MOTORES = {
   Pynac: "la biblioteca de expresiones simbólicas de Sage (sumar, expandir, sustituir…)",
   matplotlib: "la biblioteca de gráficos de Python, que dibuja la imagen",
   Tachyon: "un programa de trazado de rayos, que hace la foto de un gráfico 3D",
+  GSL: "la biblioteca científica de GNU, que integra con números (Gauss-Kronrod)",
+  SymPy: "la biblioteca de cálculo simbólico de Python, a la que Sage pregunta cuando Maxima no puede",
+  Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
-const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", SR: "el anillo simbólico" };
+const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
 // «Sage real»: el mismo programa en SageMathCell, el servidor público de Sage, dentro de la página.
