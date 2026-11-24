@@ -39,6 +39,7 @@ project:
         - file: capitulos/13-gauss.md
         - file: capitulos/14-determinantes.md
         - file: capitulos/15-nucleo.md
+        - file: capitulos/16-autovalores.md
 site:
   template: book-theme
   options:

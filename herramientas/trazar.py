@@ -75,6 +75,7 @@ CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Symbolic Ring$", "SR"), (r"^Finite Field of size (\d+)$", r"GF(\1)"),
           (r"^Ring of integers modulo (\d+)$", r"Zmod(\1)"), (r"^Complex Field with 53 bits of precision$", "CC"), (r"^Complex Field with (\d+) bits of precision$", r"ComplexField(\1)"),
           (r"^Real Double Field$", "RDF"),
+          (r"^Algebraic Field$", "QQbar"), (r"^Algebraic Real Field$", "AA"),
           # f(x) = x^2: Sage escribe la función como «x |--> x^2»; la etiqueta corta del libro lo imita
           (r"^Callable function ring with argument (\w+)$", r"\1 ↦ SR"),
           (r"^Callable function ring with arguments (\(.*\))$", r"\1 ↦ SR")]
@@ -92,9 +93,14 @@ def corto_de(completo):
     m = re.match(r"^Vector space of degree (\d+) and dimension (\d+) over ([^\n]+)", completo)
     if m:
         return f"⊂ {corto_de(m.group(3))}^{m.group(1)}"
-    m = re.match(r"^Full MatrixSpace of (\d+) by (\d+) dense matrices over (.+)$", completo)
+    m = re.match(r"^Univariate Polynomial Ring in (\w+) over (.+)$", completo)
     if m:
-        return f"Mat({m.group(1)}×{m.group(2)}, {corto_de(m.group(3))})"
+        return f"{corto_de(m.group(2))}[{m.group(1)}]"
+    m = re.match(r"^Full MatrixSpace of (\d+) by (\d+) (dense|sparse) matrices over (.+)$", completo)
+    if m:
+        # eigenmatrix_right devuelve la diagonal D como matriz dispersa (sparse): solo guarda lo que no es 0
+        dispersa = ", dispersa" if m.group(3) == "sparse" else ""
+        return f"Mat({m.group(1)}×{m.group(2)}, {corto_de(m.group(4))}{dispersa})"
     return completo
 
 
@@ -228,22 +234,40 @@ def llamadas_pari(texto_prep, ctx):
 
 
 def llamadas_matrices(texto_prep, ctx):
-    """Determinante e inversa de una matriz, según el código de Sage 10.8: en ZZ y QQ, FLINT
-    (determinant e inverse: «None: (default) uses flint»); en GF(p) con p > 2 primo, LinBox
-    (determinant llama a linbox_det)."""
+    """Determinante, inversa, polinomio característico y autovalores de una matriz, según el
+    código de Sage 10.8: det e inversa en ZZ y QQ, FLINT («None: (default) uses flint»); det en
+    GF(p) con p > 2 primo, LinBox (linbox_det); charpoly en QQ, FLINT, y en ZZ, LinBox;
+    eigenvalues sobre RR o CC, PARI (pari_charpoly)."""
     try:
         arbol = ast.parse(texto_prep.strip())
     except SyntaxError:
         return None
     for n in ast.walk(arbol):
         if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute) and not n.args and not n.keywords
-                and n.func.attr in ("det", "determinant", "inverse")):
+                and n.func.attr in ("det", "determinant", "inverse", "charpoly", "eigenvalues")):
             continue
         try:
             v = eval(compile(ast.Expression(n.func.value), "", "eval"), entorno(), dict(ctx))
         except Exception:
             continue
         clase = type(v).__name__
+        if n.func.attr == "charpoly":
+            # QQ: algorithm = 'flint' (quita denominadores y llama a fmpz_mat_charpoly);
+            # ZZ: 'linbox' si está _charpoly_linbox (lo está en passagemath-standard).
+            if clase == "Matrix_rational_dense":
+                return "FLINT"
+            if clase == "Matrix_integer_dense":
+                return "LinBox"
+            continue
+        if n.func.attr == "eigenvalues":
+            # Sobre RR o CC: algorithm = "pari_charpoly" → pari(self).charpoly().polroots().
+            try:
+                from sage.rings.abc import RealField, ComplexField
+                if isinstance(v.base_ring(), (RealField, ComplexField)):
+                    return "PARI"
+            except Exception:
+                pass
+            continue
         if clase == "Matrix_rational_dense" or clase == "Matrix_integer_dense" and n.func.attr != "inverse":
             return "FLINT"
         if clase.startswith("Matrix_modn_dense") and n.func.attr != "inverse":

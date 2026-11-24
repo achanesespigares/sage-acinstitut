@@ -231,7 +231,7 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const MOTORES = {
   GMP: "la biblioteca de enteros y fracciones de tamaño ilimitado",
   MPFR: "la biblioteca de decimales con la precisión que se pida",
-  PARI: "el programa de teoría de números (factorizar, primos…)",
+  PARI: "el programa de teoría de números (factorizar, primos, raíces de polinomios…)",
   Maxima: "el programa de cálculo simbólico (integrales, límites, ecuaciones…)",
   Pynac: "la biblioteca de expresiones simbólicas de Sage (sumar, expandir, sustituir…)",
   matplotlib: "la biblioteca de gráficos de Python, que dibuja la imagen",
@@ -246,22 +246,30 @@ const MOTORES = {
 // Nombres completos de los padres, para la narración
 // En la narración, una matriz (varias líneas) va en un bloque, con sus filas enteras
 function vNar(v) { return /\n/.test(v) ? '<code class="tz-matnar">' + esc(v) + "</code>" : esc(v); }
-function nombrePadre(b) { const m = /^GF\((\d+)\)$/.exec(b); return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : b); }
+function nombrePadre(b) {
+  const m = /^GF\((\d+)\)$/.exec(b), c = /^ComplexField\((\d+)\)$/.exec(b);
+  return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : c ? "los complejos con " + c[1] + " bits de precisión" : b);
+}
 // QQ^3: vectores de 3 componentes; Mat(2×2, QQ): matrices de 2 filas y 2 columnas
 function descPadreCompuesto(tp) {
   let m = /^⊂ (.+)\^(\d+)$/.exec(tp);
   if (m) return ", un subespacio de los vectores de " + m[2] + " componentes en " + nombrePadre(m[1]);
   m = /^(.+)\^(\d+)$/.exec(tp);
   if (m) return ", los vectores de " + m[2] + " componentes en " + nombrePadre(m[1]);
-  m = /^Mat\((\d+)×(\d+), (.+)\)$/.exec(tp);
-  if (m) return ", las matrices de " + m[1] + "×" + m[2] + " con entradas en " + nombrePadre(m[3]);
-  m = /^GF\((\d+)\)$/.exec(tp);
+  m = /^Mat\((\d+)×(\d+), (.+?)(, dispersa)?\)$/.exec(tp);
+  if (m) return ", las matrices " + (m[4] ? "dispersas " : "") + "de " + m[1] + "×" + m[2] + " con entradas en " + nombrePadre(m[3])
+    + (m[4] ? " (Sage solo guarda las casillas que no son 0)" : "");
+  m = /^(.+)\[(\w+)\]$/.exec(tp);
+  if (m) return ", los polinomios en " + m[2] + " con coeficientes en " + nombrePadre(m[1]);
+  m = /^(GF|ComplexField)\((\d+)\)$/.exec(tp);
   if (m) return ", " + nombrePadre(tp);
   return "";
 }
 // Valores que son espacios vectoriales (no viven en un padre: lo son)
 const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subespacio vectorial: Sage guarda su dimensión y una base" };
-const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico" };
+const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico",
+  QQbar: "los números algebraicos: raíces de polinomios con coeficientes racionales, guardadas de forma exacta",
+  AA: "los números algebraicos reales: raíces reales de polinomios con coeficientes racionales, guardadas de forma exacta" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
 // «Sage real»: el mismo programa en SageMathCell, el servidor público de Sage, dentro de la página.
@@ -961,6 +969,8 @@ function renderTraza({ model, el }) {
   if (!C.matriz) q(".tz-mat-bloque").style.display = "none"; else q(".tz-mat-nom").textContent = C.matriz;
   if (!lista) q(".tz-lista-bloque").style.display = "none";
   q(".tz-tabla-sub").textContent = porLinea ? "una fila por línea ejecutada" : "una fila por vuelta";
+  // Sin columnas («columnas»: []) la tabla solo tendría números de línea: no se muestra
+  if (!C.columnas.length) q(".tz-tabla-wrap").closest(".tz-caja").style.display = "none";
   q(".tz-nota-tabla").textContent = porLinea
     ? "Cada fila es el estado de las variables justo después de ejecutar esa línea: así se hace una traza a mano."
     : C.fila_en === "comprobacion"
@@ -1299,11 +1309,16 @@ function renderTraza({ model, el }) {
     if (C.matriz) {
       const entero = v => typeof v === "number" ? v : v && /^-?\d+$/.test(v.__txt__) ? Number(v.__txt__) : NaN;  // los enteros de Sage llegan como texto
       const m = p.estado[C.matriz], fi = entero(p.estado[C.fila]), co = entero(p.estado[C.col]);
-      const ok = Array.isArray(m) && Number.isInteger(fi) && fi >= 0 && fi < m.length && Array.isArray(m[fi]) && Number.isInteger(co) && co >= 0 && co < m[fi].length && !saleDelBucle(p, sig);
+      // Sin «col» en la configuración, la rejilla marca la fila entera
+      const okFila = Array.isArray(m) && Number.isInteger(fi) && fi >= 0 && fi < m.length && Array.isArray(m[fi]) && !saleDelBucle(p, sig);
+      const ok = okFila && (C.col ? Number.isInteger(co) && co >= 0 && co < m[fi].length : true);
+      const soloFila = ok && !C.col;
       q(".tz-matriz").innerHTML = !Array.isArray(m) ? '<tr><td class="tz-vacio" style="border:0;width:auto">Todavía no existe.</td></tr>'
         : "<tr><th></th>" + (m[0] || []).map((_, j) => "<th>" + j + "</th>").join("") + "</tr>" + m.map((fila, i) => "<tr><th>" + i + "</th>" + (Array.isArray(fila) ? fila : [fila]).map((v, j) =>
-            '<td class="' + (ok && i === fi && j === co ? "foco" : ok && i === fi ? "fila" : "") + '">' + esc(pyVal(v)) + "</td>").join("") + "</tr>").join("");
-      q(".tz-mat-consulta").textContent = ok ? C.matriz + "[" + fi + "][" + co + "] → " + (oculto ? "?" : pyVal(m[fi][co])) + "   (fila " + fi + ", columna " + co + ")" : "";
+            '<td class="' + (ok && !soloFila && i === fi && j === co ? "foco" : ok && i === fi ? "fila" : "") + '">' + esc(pyVal(v)) + "</td>").join("") + "</tr>").join("");
+      q(".tz-mat-consulta").textContent = !ok ? ""
+        : soloFila ? C.matriz + "[" + fi + "] → " + (oculto ? "?" : pyVal(m[fi])) + "   (fila " + fi + ")"
+        : C.matriz + "[" + fi + "][" + co + "] → " + (oculto ? "?" : pyVal(m[fi][co])) + "   (fila " + fi + ", columna " + co + ")";
     }
     const cas = q(".tz-casillas");
     if (!arr) { cas.innerHTML = '<span class="tz-vacio">Todavía no existe.</span>'; q(".tz-consulta").textContent = ""; }
