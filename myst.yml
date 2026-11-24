@@ -31,6 +31,7 @@ project:
         - file: capitulos/07-derivadas.md
         - file: capitulos/08-integrales.md
         - file: capitulos/09-series.md
+        - file: capitulos/10-ecuaciones.md
 site:
   template: book-theme
   options:

@@ -44,7 +44,7 @@ def usa(nombre=None):
             from sage.repl.preparse import preparse
             # Maxima y SymPy se cargan la primera vez que hacen falta, y cargar un módulo ejecuta su
             # código: el perfilador lo vería como un cálculo. Se cargan ya, antes de trazar nada.
-            for modulo in ("sage.interfaces.maxima_lib", "sage.interfaces.sympy", "sympy"):
+            for modulo in ("sage.interfaces.maxima_lib", "sage.interfaces.sympy", "sympy", "scipy.optimize"):
                 try:
                     __import__(modulo)
                 except ImportError:
@@ -122,7 +122,9 @@ MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   (re.compile(r"interfaces[/\\]tachyon"), "Tachyon"),
                   # integrate() prueba con Maxima; si no puede, con Giac (si está) y con SymPy
                   (re.compile(r"giac"), "Giac"),
-                  (re.compile(r"[/\\]sympy[/\\]"), "SymPy")]
+                  (re.compile(r"[/\\]sympy[/\\]"), "SymPy"),
+                  # find_root resuelve con scipy.optimize.brentq (lo dice su documentación)
+                  (re.compile(r"[/\\]scipy[/\\]optimize[/\\]"), "SciPy")]
 # numerical_integral: «ALGORITHM: Uses calls to the GSL (GNU Scientific Library) C library»
 FUNCIONES_GSL = {"numerical_integral"}
 
@@ -405,7 +407,10 @@ def marca(v, numeros):
     if isinstance(v, tuple):
         return {"__tupla__": [marca(x, numeros) for x in v]}
     if isinstance(v, dict):
-        return {str(k): marca(x, numeros) for k, x in v.items()}
+        if all(isinstance(k, str) for k in v):
+            return {k: marca(x, numeros) for k, x in v.items()}
+        # Claves que no son textos (x, 1…): el JSON solo admite textos, así que se escribe como Python
+        return {"__txt__": re.sub(r" at 0x[0-9a-fA-F]+", "", repr(v))}
     if isinstance(v, BaseException):
         return {"__exc__": repr(v)}
     if isinstance(v, float) and (v != v or v in (float("inf"), float("-inf"))):

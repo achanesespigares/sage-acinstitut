@@ -27,7 +27,7 @@ El libro acaba de empezar. Ya puedes leer [Cómo leer este libro](capitulos/00-c
 | Parte | Capítulos |
 |---|---|
 | I · Primeros pasos | **[Sage como calculadora exacta](capitulos/01-calculadora.md)** · **[El preparador](capitulos/02-preparador.md)** · **[Variables simbólicas y expresiones](capitulos/03-simbolicas.md)** · **[Funciones](capitulos/04-funciones.md)** · **[Gráficos en 2D y 3D](capitulos/05-graficos.md)** |
-| II · Cálculo | **[Límites y continuidad](capitulos/06-limites.md)** · **[Derivadas](capitulos/07-derivadas.md)** · **[Integrales exactas y numéricas](capitulos/08-integrales.md)** · **[Series, Taylor y sumas](capitulos/09-series.md)** · Ecuaciones y sistemas · Ecuaciones diferenciales |
+| II · Cálculo | **[Límites y continuidad](capitulos/06-limites.md)** · **[Derivadas](capitulos/07-derivadas.md)** · **[Integrales exactas y numéricas](capitulos/08-integrales.md)** · **[Series, Taylor y sumas](capitulos/09-series.md)** · **[Ecuaciones y sistemas](capitulos/10-ecuaciones.md)** · Ecuaciones diferenciales |
 | III · Álgebra lineal | Vectores y matrices sobre ℚ, ℝ y GF(p) · Sistemas, rango y Gauss paso a paso · Determinantes e inversas · Núcleo, imagen y bases · Autovalores, diagonalización y Jordan |
 | IV · Números y estructuras | Primos, mcd y congruencias · Polinomios y anillos · Combinatoria y probabilidad · Grafos |
 | V · Sage por dentro | Padres y elementos · Coerción · Exacto frente a aproximado · Qué hay debajo · Trabajar como profesional |

@@ -234,6 +234,7 @@ const MOTORES = {
   Tachyon: "un programa de trazado de rayos, que hace la foto de un gráfico 3D",
   GSL: "la biblioteca científica de GNU, que integra con números (Gauss-Kronrod)",
   SymPy: "la biblioteca de cálculo simbólico de Python, a la que Sage pregunta cuando Maxima no puede",
+  SciPy: "la biblioteca científica de Python, que busca raíces con números (método de Brent)",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
