@@ -33,6 +33,9 @@ project:
         - file: capitulos/09-series.md
         - file: capitulos/10-ecuaciones.md
         - file: capitulos/11-diferenciales.md
+    - title: Parte III · Álgebra lineal
+      children:
+        - file: capitulos/12-matrices.md
 site:
   template: book-theme
   options:

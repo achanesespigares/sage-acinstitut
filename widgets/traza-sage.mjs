@@ -68,6 +68,10 @@ pre.tz-codigo{ margin:0; font:400 14px/1.85 var(--mono); overflow-x:auto; backgr
 .tz .var .tipo{ font:600 9.5px/1 var(--titulo); letter-spacing:.06em; text-transform:uppercase; color:var(--acento); border:1px solid var(--acento); border-radius:3px; padding:2px 4px; }
 .tz .var .val{ font:600 19px/1.15 var(--mono); white-space:pre-wrap; }
 .tz .var .val.largo{ font:500 14px/1.35 var(--mono); }
+.tz .var.ancha{ max-width:100%; min-width:0; }
+.tz .var .val.multi{ white-space:pre; overflow-x:auto; max-width:100%; }
+table.tz-tabla td.multi{ white-space:pre; }
+.tz-narr code.tz-matnar{ display:block; white-space:pre; overflow-x:auto; margin:4px 0; padding:4px 6px; }
 .tz .var.cambia{ border:2px solid var(--acento); background:var(--suave); }
 .tz .var .antes{ font:400 11px/1 var(--mono); color:var(--banda); text-decoration:line-through; }
 .tz-vacio{ font-size:14px; color:var(--banda); font-style:italic; }
@@ -235,9 +239,24 @@ const MOTORES = {
   GSL: "la biblioteca científica de GNU, que integra con números (Gauss-Kronrod)",
   SymPy: "la biblioteca de cálculo simbólico de Python, a la que Sage pregunta cuando Maxima no puede",
   SciPy: "la biblioteca científica de Python, que busca raíces con números (método de Brent)",
+  FLINT: "la biblioteca de teoría de números rápida, que guarda y opera las matrices de enteros y fracciones",
+  LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p)",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
+// En la narración, una matriz (varias líneas) va en un bloque, con sus filas enteras
+function vNar(v) { return /\n/.test(v) ? '<code class="tz-matnar">' + esc(v) + "</code>" : esc(v); }
+function nombrePadre(b) { const m = /^GF\((\d+)\)$/.exec(b); return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : b); }
+// QQ^3: vectores de 3 componentes; Mat(2×2, QQ): matrices de 2 filas y 2 columnas
+function descPadreCompuesto(tp) {
+  let m = /^(.+)\^(\d+)$/.exec(tp);
+  if (m) return ", los vectores de " + m[2] + " componentes en " + nombrePadre(m[1]);
+  m = /^Mat\((\d+)×(\d+), (.+)\)$/.exec(tp);
+  if (m) return ", las matrices de " + m[1] + "×" + m[2] + " con entradas en " + nombrePadre(m[3]);
+  m = /^GF\((\d+)\)$/.exec(tp);
+  if (m) return ", " + nombrePadre(tp);
+  return "";
+}
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
@@ -1216,7 +1235,7 @@ function renderTraza({ model, el }) {
       const lee = p.lee && p.foco !== null ? " Para ello se consulta la casilla " + p.foco + " de la lista, que vale " + fmtVal(p.estado[lista][p.foco]) + "." : "";
       const tp = p.tipos && p.tipos[n], completo = p.padres && p.padres[n];
       const tipo = C.mostrar_tipos === false || !tp ? ""
-        : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : / ↦ SR$/.test(tp) ? ", las funciones simbólicas que dan una expresión de SR" : "") + " (<i>" + esc(completo) + "</i>)"
+        : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : / ↦ SR$/.test(tp) ? ", las funciones simbólicas que dan una expresión de SR" : descPadreCompuesto(tp)) + " (<i>" + esc(completo) + "</i>)"
         : esDePython(tp) ? ", un <code>" + esc(tp) + "</code> de Python, no de Sage" : " (<code>" + esc(tp) + "</code>)";
       const otras = cambios.length > 1 ? " También cambia <code>" + cambios.slice(1).join("</code>, <code>") + "</code>." : "";
       if (esObj(p.estado[n]) && esObj(a) && a.__obj__ === p.estado[n].__obj__) {
@@ -1232,9 +1251,9 @@ function renderTraza({ model, el }) {
         return a === undefined && forVar === n
           ? "Empieza el <code>for</code>: <code>" + forVar + "</code> toma su primer valor, " + esc(rep(p, forVar)) + "."
           : "Siguiente vuelta del <code>for</code>: <code>" + forVar + "</code> pasa a valer " + esc(rep(p, forVar)) + ".";
-      if (alias) return "<code>" + n + "</code> cambia: valía " + esc(rep(prev, n)) + " y ahora vale " + esc(rep(p, n)) + "." + alias;
-      if (a === undefined) return "Se crea la variable <code>" + n + "</code> y vale " + esc(rep(p, n)) + tipo + "." + lee + otras;
-      return "<code>" + n + "</code> cambia: valía " + esc(rep(prev, n)) + " y ahora vale " + esc(rep(p, n)) + tipo + "." + lee + otras + desdeFuncion;
+      if (alias) return "<code>" + n + "</code> cambia: valía " + vNar(rep(prev, n)) + " y ahora vale " + vNar(rep(p, n)) + "." + alias;
+      if (a === undefined) return "Se crea la variable <code>" + n + "</code> y vale " + vNar(rep(p, n)) + tipo + "." + lee + otras;
+      return "<code>" + n + "</code> cambia: valía " + vNar(rep(prev, n)) + " y ahora vale " + vNar(rep(p, n)) + tipo + "." + lee + otras + desdeFuncion;
     }
     const la = lista && casillasDe(p.estado[lista]), lb = lista && casillasDe(prev.estado[lista]);
     if (Array.isArray(la) && Array.isArray(lb) && la.length === lb.length) {
@@ -1319,7 +1338,8 @@ function renderTraza({ model, el }) {
       const tp = p.tipos && p.tipos[n], completo = p.padres && p.padres[n];
       const tipo = C.mostrar_tipos !== false && tp ? '<span class="tipo' + (completo ? "" : " py") + '" title="' + esc(completo ? "Padre: " + completo : "Tipo de Python: " + tp) + '">' + esc(tp) + "</span>" : "";
       const largo = p.estado[n] !== null && typeof p.estado[n] === "object" && ("__txt__" in p.estado[n] || "__bytes__" in p.estado[n]);
-      return '<div class="var' + (cambia ? " cambia" : "") + '"><span class="k">' + n + tipo + '</span><span class="val' + (largo ? " largo" : "") + '">' +
+      const multi = /\n/.test(rep(p, n));            // matrices: una fila por línea, sin partirlas
+      return '<div class="var' + (cambia ? " cambia" : "") + (multi ? " ancha" : "") + '"><span class="k">' + n + tipo + '</span><span class="val' + (largo ? " largo" : "") + (multi ? " multi" : "") + '">' +
         (oculto && cambia ? "?" : esc(rep(p, n))) + "</span>" + antes + "</div>";
     }).join("") : '<span class="tz-vacio">Aún no hay variables.</span>';
 
@@ -1390,7 +1410,7 @@ function renderTraza({ model, el }) {
       t += '<tr class="' + (nv ? "nueva" : "") + (v ? "" : " fantasma") + '"><td>' + (porLinea && !v ? "·" : primera) + "</td>" + f.map(c => {
         if (!v) return "<td>·</td>";
         const cls = oculto && nv ? "" : (c === "Sí" ? "si" : c === "No" ? "no" : "");
-        return '<td class="' + cls + '">' + esc(oculto && nv ? "?" : c) + "</td>";
+        return '<td class="' + cls + (/\n/.test(c) ? " multi" : "") + '">' + esc(oculto && nv ? "?" : c) + "</td>";
       }).join("") + "</tr>";
     });
     q(".tz-tabla").innerHTML = t + "</tbody>";

@@ -80,6 +80,20 @@ CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Callable function ring with arguments (\(.*\))$", r"\1 ↦ SR")]
 
 
+def corto_de(completo):
+    """Nombre corto de un padre: ZZ, QQ…; los vectores, QQ^3; las matrices, Mat(2×2, QQ)."""
+    for patron, sustituto in CORTOS:
+        if re.match(patron, completo):
+            return re.sub(patron, sustituto, completo)
+    m = re.match(r"^(?:Vector space of dimension|Ambient free module of rank) (\d+) over (?:the principal ideal domain )?(.+)$", completo)
+    if m:
+        return f"{corto_de(m.group(2))}^{m.group(1)}"
+    m = re.match(r"^Full MatrixSpace of (\d+) by (\d+) dense matrices over (.+)$", completo)
+    if m:
+        return f"Mat({m.group(1)}×{m.group(2)}, {corto_de(m.group(3))})"
+    return completo
+
+
 def padre_de(v):
     """(corto, completo) del padre de un valor de Sage; para los de Python, su tipo."""
     if isinstance(v, (bool, int, float, str, list, tuple, dict, set, frozenset, type(None))):
@@ -91,12 +105,7 @@ def padre_de(v):
             if isinstance(P, type):                # algunos objetos devuelven una clase: no es un padre
                 return type(v).__name__, None
             completo = str(P)
-            corto = completo
-            for patron, sustituto in CORTOS:
-                if re.match(patron, completo):
-                    corto = re.sub(patron, sustituto, completo)
-                    break
-            return corto, completo
+            return corto_de(completo), completo
         except Exception:
             pass
     return type(v).__name__, None
@@ -129,7 +138,21 @@ MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
 FUNCIONES_GSL = {"numerical_integral"}
 
 
-def motor_por_valor(v):
+def motor_por_valor(v, multiplica=False):
+    # Matrices y vectores: lo dice el código de Sage (véase la hoja de ruta). Las matrices
+    # densas de ZZ y QQ son de FLINT (fmpz_mat_mul, fmpq_mat_add, _multiply_flint); las de
+    # GF(p) pequeño multiplican con LinBox (linbox_matrix_matrix_multiply → fgemm de
+    # FFLAS-FFPACK), pero suman con un bucle propio; los vectores de ZZ y QQ, con GMP (mpq_add).
+    clase = type(v).__name__
+    if clase in ("Matrix_integer_dense", "Matrix_rational_dense"):
+        return "FLINT"
+    if clase.startswith("Matrix_modn_dense"):
+        return "LinBox" if multiplica else None
+    if clase in ("Vector_integer_dense", "Vector_rational_dense"):
+        return "GMP"
+    if clase.startswith(("Matrix_", "Vector_", "FreeModuleElement")) and hasattr(v, "base_ring"):
+        base = corto_de(str(v.base_ring()))
+        return {"RR": "MPFR", "CC": "MPFR", "SR": "Pynac"}.get(base)
     corto, _ = padre_de(v)
     if corto in ("ZZ", "QQ"):
         return "GMP"
@@ -238,11 +261,13 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
         en_indices = {id(m) for s in ast.walk(arbol) if isinstance(s, ast.Subscript) for m in ast.walk(s.slice)}
         opera = any((isinstance(n, ARITMETICA) or es_aproximar(n)) and id(n) not in en_indices
                     for n in ast.walk(arbol))
+        multiplica = any(isinstance(n, ast.BinOp) and isinstance(n.op, (ast.Mult, ast.Pow)) and id(n) not in en_indices
+                         for n in ast.walk(arbol))
     except SyntaxError:
-        opera = False
+        opera = multiplica = False
     if opera and not motores:
         for v in nuevos:
-            m = motor_por_valor(v)
+            m = motor_por_valor(v, multiplica)
             if m and m not in motores:
                 motores.append(m)
     return motores
