@@ -39,6 +39,9 @@ class Padre:
     def __init__(self, nombre, corto):
         self._nombre, self._corto = nombre, corto
 
+    def __pow__(self, n):                       # QQ^3: un espacio vectorial
+        no_lo_se(f"«{self._corto}^{n}» (los espacios vectoriales)")
+
     def __repr__(self):
         return self._nombre
 

@@ -259,6 +259,8 @@ function descPadreCompuesto(tp) {
   if (m) return ", " + nombrePadre(tp);
   return "";
 }
+// Valores que son espacios vectoriales (no viven en un padre: lo son)
+const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subespacio vectorial: Sage guarda su dimensión y una base" };
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
@@ -1237,6 +1239,7 @@ function renderTraza({ model, el }) {
       const lee = p.lee && p.foco !== null ? " Para ello se consulta la casilla " + p.foco + " de la lista, que vale " + fmtVal(p.estado[lista][p.foco]) + "." : "";
       const tp = p.tipos && p.tipos[n], completo = p.padres && p.padres[n];
       const tipo = C.mostrar_tipos === false || !tp ? ""
+        : ESPACIOS[tp] ? ", que es " + ESPACIOS[tp] + " (<i>" + esc(completo) + "</i>)"
         : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : / ↦ SR$/.test(tp) ? ", las funciones simbólicas que dan una expresión de SR" : descPadreCompuesto(tp)) + " (<i>" + esc(completo) + "</i>)"
         : esDePython(tp) ? ", un <code>" + esc(tp) + "</code> de Python, no de Sage" : " (<code>" + esc(tp) + "</code>)";
       const otras = cambios.length > 1 ? " También cambia <code>" + cambios.slice(1).join("</code>, <code>") + "</code>." : "";

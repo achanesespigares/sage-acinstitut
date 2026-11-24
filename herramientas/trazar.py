@@ -102,6 +102,13 @@ def padre_de(v):
     """(corto, completo) del padre de un valor de Sage; para los de Python, su tipo."""
     if isinstance(v, (bool, int, float, str, list, tuple, dict, set, frozenset, type(None))):
         return type(v).__name__, None
+    # Un espacio o subespacio vectorial (QQ^3, el núcleo…) es él mismo un padre: se etiqueta por lo que es
+    # (los nombres pendientes del laboratorio avisan al tocar cualquier atributo: por eso el try)
+    try:
+        if all(hasattr(v, a) for a in ("is_ambient", "degree", "dimension", "basis")) and not hasattr(v, "dot_product"):
+            return ("espacio" if v.is_ambient() else "subespacio"), str(v).split("\n")[0]
+    except Exception:
+        pass
     p = getattr(v, "parent", None)
     if callable(p):
         try:
