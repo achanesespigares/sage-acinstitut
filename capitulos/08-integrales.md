@@ -126,7 +126,7 @@ Según la documentación de Sage, `numerical_integral` usa la GSL con una regla 
 :class: afondo
 ### 5 · Cuando lo exacto se equivoca
 
-Un resultado exacto parece más fiable que uno numérico. Casi siempre lo es, pero no siempre. Comparemos las dos vías con `sin(x)/x` entre 0 y 1.
+Un resultado exacto parece más fiable que uno numérico. Casi siempre lo es, pero no siempre. Comparemos las dos vías con `sin(x)/x` entre 0 y 1, con el Sage de este libro: Sage 10.8 instalado con passagemath, que lleva Maxima 5.50.
 
 ```{code-cell} sage
 a = integrate(sin(x)/x, x, 0, 1)
@@ -137,7 +137,7 @@ b - d
 ```
 
 ```{anywidget} ../widgets/traza-sage.mjs
-{"archivo":"datos/trazas/08-integrales-5.json","config":{"titulo":"Dos respuestas que no coinciden","etiqueta":"integrate frente a numerical_integral","idea":"La fórmula exacta de Maxima, pasada a decimales, da 4.0877; la integral numérica, 0.9461. La buena es la numérica: es el seno integral de 1, Si(1). Y la diferencia es exactamente π: la fórmula de Maxima usa una rama de Ei que no es la que usa Sage al pasar a decimales.","columnas":["b","c","d"],"fila_en":"cada_linea","mostrar_tipos":true,"solo_sage":true}}
+{"archivo":"datos/trazas/08-integrales-5.json","config":{"titulo":"Dos respuestas que no coinciden","etiqueta":"integrate frente a numerical_integral","idea":"Con la Maxima de este libro, la fórmula exacta, pasada a decimales, da 4.0877; la integral numérica, 0.9461. La buena es la numérica: es el seno integral de 1, Si(1). La diferencia es exactamente π: la fórmula lleva +π/2 donde debería llevar −π/2.","columnas":["b","c","d"],"fila_en":"cada_linea","mostrar_tipos":true,"solo_sage":true}}
 ```
 
 - `a` vale `1/2*pi - 1/2*I*Ei(I) + 1/2*I*Ei(-I)`: una fórmula exacta con la **integral exponencial** `Ei` en números complejos.
@@ -146,9 +146,9 @@ b - d
 - `d` es el **seno integral**, `sin_integral(1)`, la función especial que vale exactamente esta integral: `0.946083070367183`. Coincide con la numérica.
 - La última línea da `3.14159265358979`: la fórmula exacta se pasa justo en **π**.
 
-Las funciones como `Ei` en números complejos tienen varias **ramas**, y la fórmula que da Maxima solo vale con una de ellas. Al pasar a decimales, Sage usa otra, y aparece π de más. Pedírsela a SymPy, con `integrate(sin(x)/x, x, 0, 1, algorithm='sympy')`, da la respuesta buena: `sin_integral(1)`.
+La fórmula correcta empieza por `-1/2*pi`, no por `1/2*pi`: un signo cambiado, y por eso sobra exactamente π. Pulsa **Sage real**: SageMathCell tiene Sage 10.10 con Maxima 5.49, y allí la fórmula sale con `-1/2*pi` y la última línea da `0.000000000000000`. El mismo programa da resultados distintos según la versión. También se puede pedir la integral a SymPy, con `integrate(sin(x)/x, x, 0, 1, algorithm='sympy')`, que da la respuesta buena: `sin_integral(1)`.
 
-La lección no es desconfiar de Sage, sino **comprobar**. Una integral exacta se puede contrastar en una línea con `numerical_integral`, y un buen hábito es hacerlo, sobre todo cuando aparecen funciones especiales o números complejos. (Comprobado en Sage 10.8; pulsa «Sage real» para ver qué da la versión de SageMathCell).
+La lección no es desconfiar de Sage, sino **comprobar**. Una integral exacta se contrasta en una línea con `numerical_integral`, y es un buen hábito, sobre todo cuando aparecen funciones especiales o números complejos. Los errores existen en todos los programas de cálculo, y las versiones nuevas los corrigen (y alguna vez traen otros).
 ::::
 
 :::{admonition} La misma idea en tres lenguajes
@@ -170,7 +170,7 @@ Sage y Julia devuelven el valor con su error estimado, y los dos usan reglas de 
 - La suma de Riemann del apartado 1 es una suma finita; la del apartado 2, una suma con *m* términos que tiende a una integral. Las sumas infinitas, las **series**, son el capítulo 9.
 - Una primitiva es una función cuya derivada es *f*: `diff(integrate(f(x), x), x)` devuelve *f*. Integrar y derivar son operaciones inversas.
 - Las ecuaciones diferenciales del capítulo 11 piden primitivas más difíciles: funciones de las que solo se conoce una relación con su derivada.
-- La rama de `Ei` del apartado 5 vuelve en la parte V, en el capítulo **Exacto frente a aproximado**.
+- Comprobar un resultado exacto con uno numérico, como en el apartado 5, vuelve en la parte V, en el capítulo **Exacto frente a aproximado**.
 
 ## La grieta
 
@@ -209,5 +209,5 @@ La suma de los rectángulos tenía *m* términos. ¿Y si una suma tiene infinito
 ::::{div}
 :class: afondo
 7. La serie da `0.783430510712134` y la integral numérica, `0.783430509431797`: se separan en la octava cifra decimal. La serie, con 20 términos, ya acierta todas las cifras que muestra; la integral numérica se equivoca en algo más de 10⁻⁹, dentro del error que ella misma estima (3·10⁻⁷).
-8. `4.74700563039249` y `1.6054129768026952`. Se separan en π otra vez: 4,747 − 1,605 = 3,1416. La buena es la numérica.
+8. Con el Sage de este libro, `4.74700563039249` y `1.6054129768026952`: se separan en π otra vez, 4,747 − 1,605 = 3,1416, y la buena es la numérica. En SageMathCell, con Sage 10.10, los dos dan 1,6054…
 ::::
