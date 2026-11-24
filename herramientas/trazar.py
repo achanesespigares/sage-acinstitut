@@ -234,7 +234,10 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
         motores.append("Pynac")
     try:
         arbol = ast.parse(texto_prep.strip())
-        opera = any(isinstance(n, ARITMETICA) or es_aproximar(n) for n in ast.walk(arbol))
+        # La cuenta de un índice (p[-1], L[i + 1]) da la posición, no el valor nuevo: no cuenta
+        en_indices = {id(m) for s in ast.walk(arbol) if isinstance(s, ast.Subscript) for m in ast.walk(s.slice)}
+        opera = any((isinstance(n, ARITMETICA) or es_aproximar(n)) and id(n) not in en_indices
+                    for n in ast.walk(arbol))
     except SyntaxError:
         opera = False
     if opera and not motores:
