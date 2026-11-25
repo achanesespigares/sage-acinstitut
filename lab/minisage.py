@@ -221,6 +221,8 @@ class _Operaciones(Elemento):
     def __rfloordiv__(self, o): return self._opera(o, "//", True)
     def __mod__(self, o): return self._opera(o, "%")
     def __rmod__(self, o): return self._opera(o, "%", True)
+    def __divmod__(self, o): return (self._opera(o, "//"), self._opera(o, "%"))
+    def __rdivmod__(self, o): return (self._opera(o, "//", True), self._opera(o, "%", True))
 
     def _compara(self, otro):
         if isinstance(otro, float) and not isinstance(self, RealNumber):
@@ -800,18 +802,33 @@ class IntegerFactorization(Factorization):
 
 
 # ── Funciones de Sage que el laboratorio sabe hacer ───────────────────────────────────────
+_PRIMOS_PEQUENOS = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71]
+
+
 def _es_primo(n):
+    """Divisiones hasta 1000 y después Miller-Rabin con las bases 2, 3, …, 71: es exacto para
+    n < 3,3·10²⁴ (bases hasta 41), y para números mayores el error es despreciable."""
     if n < 2:
         return False
-    if n < 4:
-        return True
-    if n % 2 == 0 or n % 3 == 0:
-        return False
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
+    for p in range(2, 1000):
+        if p * p > n:
+            return True
+        if n % p == 0:
+            return n == p
+    d, s = n - 1, 0
+    while d % 2 == 0:
+        d //= 2
+        s += 1
+    for a in _PRIMOS_PEQUENOS:
+        x = pow(a, d, n)
+        if x in (1, n - 1):
+            continue
+        for _ in range(s - 1):
+            x = x * x % n
+            if x == n - 1:
+                break
+        else:
             return False
-        i += 6
     return True
 
 
@@ -894,6 +911,38 @@ def gcd(a, b=None):
     if isinstance(a, Rational) or isinstance(b, Rational):
         no_lo_se("gcd() de fracciones")
     return Integer(math.gcd(int(_entero(a, "gcd()")), int(_entero(b, "gcd()"))))
+
+
+def inverse_mod(a, m):
+    """inverse_mod de Sage: el inverso de a módulo m (siempre un entero de Sage)."""
+    a, m = _entero(a, "inverse_mod() de algo que no es un entero"), _entero(m, "inverse_mod() módulo algo que no es un entero")
+    if abs(m._n) == 1:
+        return Integer(0)
+    try:
+        return Integer(pow(a._n, -1, abs(m._n)))
+    except ValueError:
+        raise ZeroDivisionError(f"inverse of Mod({a._n}, {m._n}) does not exist") from None
+
+
+def power_mod(a, n, m):
+    """power_mod de Sage: a^n módulo m, con el mismo tipo que a % m."""
+    if not m:
+        raise ZeroDivisionError("modulus must be nonzero")
+    if isinstance(a, Rational) or isinstance(n, Rational) or isinstance(m, Rational):
+        no_lo_se("power_mod() con fracciones")
+    a = a % m
+    if m == 1:
+        if not isinstance(a, Integer):
+            raise AttributeError("'int' object has no attribute 'parent'")
+        return Integer(0)
+    n = _entero(n, "power_mod() con un exponente que no es un entero")
+    if not n:
+        return Integer(1) if isinstance(a, Integer) else 1
+    if n < 0:
+        a = inverse_mod(a, m)
+        n = -n
+    r = pow(int(a), int(n), int(m))
+    return Integer(r) if isinstance(a, Integer) else r
 
 
 def lcm(a, b=None):
@@ -1028,6 +1077,7 @@ PROPIOS = {
     "IntegerRing": IntegerRing, "RationalField": RationalField, "parent": parent,
     "factor": factor, "is_prime": is_prime, "next_prime": next_prime, "previous_prime": previous_prime,
     "divisors": divisors, "factorial": factorial, "binomial": binomial, "gcd": gcd, "lcm": lcm,
+    "inverse_mod": inverse_mod, "power_mod": power_mod,
     "n": n, "N": N, "numerical_approx": numerical_approx, "sqrt": sqrt, "srange": srange,
     "ellipsis_range": ellipsis_range, "ellipsis_iter": ellipsis_iter, "sum": sum, "round": round, "floor": floor, "ceil": ceil,
 }

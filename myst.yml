@@ -53,6 +53,9 @@ project:
         - file: capitulos/23-exacto-aproximado.md
         - file: capitulos/24-debajo.md
         - file: capitulos/25-doctests-cython.md
+    - title: Proyectos
+      children:
+        - file: capitulos/26-rsa.md
 site:
   template: book-theme
   options:
