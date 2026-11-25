@@ -519,6 +519,11 @@ def funcion_como_valor(k, v):
 
 def es_rutina(v):
     """Una función (de Python, de Sage compilada con Cython o integrada), no un valor."""
+    # Un padre como MatrixSpace(GF(7), 2) también pasa por rutina para inspect (tiene __get__),
+    # pero es un valor: se enseña en la memoria (capítulo 21)
+    if type(v).__module__.startswith("sage.") and hasattr(v, "_element_constructor_") \
+            and hasattr(v, "category") and not inspect.isfunction(v):
+        return False
     return inspect.isroutine(v) or type(v).__name__ == "cython_function_or_method"
 
 

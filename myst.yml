@@ -46,6 +46,9 @@ project:
         - file: capitulos/18-polinomios.md
         - file: capitulos/19-combinatoria.md
         - file: capitulos/20-grafos.md
+    - title: Parte V · Sage por dentro
+      children:
+        - file: capitulos/21-padres.md
 site:
   template: book-theme
   options:

@@ -50,6 +50,23 @@ class Padre:
 
     __str__ = __repr__
 
+    # ZZ.is_field(), QQ.cardinality()…: aún no. Solo estos nombres avisan; los demás dan AttributeError,
+    # porque el trazador sondea atributos (parent, category, base_ring…) con hasattr y getattr
+    _METODOS_DE_PADRE = {"is_field", "is_finite", "is_exact", "is_commutative", "is_integral_domain",
+                         "cardinality", "order", "characteristic", "zero", "one", "list", "gen", "gens",
+                         "ngens", "an_element", "random_element", "fraction_field"}
+
+    def __getattr__(self, nombre):
+        if nombre in Padre._METODOS_DE_PADRE:
+            no_lo_se(f"«{self._corto}.{nombre}» (los métodos de los padres)")
+        raise AttributeError(nombre)
+
+    def __contains__(self, x):                  # 1/2 in ZZ: como Parent.__contains__, convierte y compara
+        try:
+            return bool(self(x) == x)
+        except (TypeError, ValueError, ZeroDivisionError):
+            return False
+
     def __reduce__(self):                          # copy.deepcopy: el padre es único
         return (_padre_por_nombre, (self._corto,))
 
