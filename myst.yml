@@ -45,6 +45,7 @@ project:
         - file: capitulos/17-primos.md
         - file: capitulos/18-polinomios.md
         - file: capitulos/19-combinatoria.md
+        - file: capitulos/20-grafos.md
 site:
   template: book-theme
   options:

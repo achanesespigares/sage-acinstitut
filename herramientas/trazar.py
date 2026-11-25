@@ -286,7 +286,9 @@ def llamadas_polinomios(texto_prep, ctx):
       funciones gcd(p, q), xgcd y lcm llaman al método del primero.
     · p(3) en QQ[x] con un número de ZZ o QQ → fmpq_poly_evaluate (FLINT).
     · factor en QQ[x] → RationalField._factor_univariate_polynomial: «This method calls PARI».
-    · factor en GF(p)[x] (Polynomial_zmod_flint) → factor_helper → nmod_poly_factor (FLINT)."""
+    · factor en GF(p)[x] (Polynomial_zmod_flint) → factor_helper → nmod_poly_factor (FLINT).
+    · factor en ZZ[x] con contenido ±1 → grado < 30 o > 300, _factor_ntl (ZZX_factor de NTL);
+      si no, _factor_pari."""
     try:
         arbol = ast.parse(texto_prep.strip())
     except SyntaxError:
@@ -318,6 +320,15 @@ def llamadas_polinomios(texto_prep, ctx):
                 return "PARI"
             if clase == "Polynomial_zmod_flint":
                 return "FLINT"
+            # ZZ[x]: Polynomial_integer_dense_flint.factor elige por el grado. Con grado < 30 o > 300,
+            # g._factor_ntl() (ZZX_factor de NTL); entre 30 y 300, PARI. Solo se asegura si el
+            # contenido es ±1, porque si no, el contenido también se factoriza (c.factor()).
+            if clase == "Polynomial_integer_dense_flint":
+                try:
+                    if abs(obj.content()) == 1:
+                        return "NTL" if not (30 <= obj.degree() <= 300) else "PARI"
+                except Exception:
+                    pass
         elif clase == "Polynomial_rational_flint":
             return "FLINT"
     return None

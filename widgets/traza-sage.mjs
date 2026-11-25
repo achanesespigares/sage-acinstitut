@@ -240,7 +240,8 @@ const MOTORES = {
   SymPy: "la biblioteca de cálculo simbólico de Python, a la que Sage pregunta cuando Maxima no puede",
   SciPy: "la biblioteca científica de Python, que busca raíces con números (método de Brent)",
   FLINT: "la biblioteca de teoría de números rápida, que guarda y opera las matrices de enteros y fracciones",
-  LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p) y calcula sus determinantes",
+  LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p), calcula sus determinantes y el polinomio característico de las de enteros",
+  NTL: "la biblioteca de teoría de números de Victor Shoup, que factoriza los polinomios de enteros",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
@@ -272,6 +273,8 @@ const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subes
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico",
   QQbar: "los números algebraicos: raíces de polinomios con coeficientes racionales, guardadas de forma exacta",
   AA: "los números algebraicos reales: raíces reales de polinomios con coeficientes racionales, guardadas de forma exacta" };
+// Objetos de Sage sin padre: la etiqueta es su clase
+const SIN_PADRE = { Graph: "un grafo de Sage: no tiene padre, y la etiqueta es su clase" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
 // «Sage real»: el mismo programa en SageMathCell, el servidor público de Sage, dentro de la página.
@@ -1253,7 +1256,8 @@ function renderTraza({ model, el }) {
       const tipo = C.mostrar_tipos === false || !tp ? ""
         : ESPACIOS[tp] ? ", que es " + ESPACIOS[tp] + " (<i>" + esc(completo) + "</i>)"
         : completo ? ", en <code>" + esc(tp) + "</code>" + (PADRES[tp] ? ", " + PADRES[tp] : / ↦ SR$/.test(tp) ? ", las funciones simbólicas que dan una expresión de SR" : descPadreCompuesto(tp)) + " (<i>" + esc(completo) + "</i>)"
-        : esDePython(tp) ? ", un <code>" + esc(tp) + "</code> de Python, no de Sage" : " (<code>" + esc(tp) + "</code>)";
+        : esDePython(tp) ? ", un <code>" + esc(tp) + "</code> de Python, no de Sage"
+        : SIN_PADRE[tp] ? ", " + SIN_PADRE[tp] + " (<code>" + esc(tp) + "</code>)" : " (<code>" + esc(tp) + "</code>)";
       const otras = cambios.length > 1 ? " También cambia <code>" + cambios.slice(1).join("</code>, <code>") + "</code>." : "";
       if (esObj(p.estado[n]) && esObj(a) && a.__obj__ === p.estado[n].__obj__) {
         const h = cambioAtributo(n, a, p.estado[n], p);
