@@ -44,6 +44,7 @@ project:
       children:
         - file: capitulos/17-primos.md
         - file: capitulos/18-polinomios.md
+        - file: capitulos/19-combinatoria.md
 site:
   template: book-theme
   options:

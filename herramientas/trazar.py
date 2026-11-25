@@ -152,7 +152,9 @@ METODOS_PARI = {"factor", "is_prime", "next_prime", "fibonacci"}
 #  · fibonacci(n): algorithm='pari' por defecto, la función fibo de PARI (combinat.py).
 #  · gcd, xgcd, lcm e inverse_mod de enteros de Sage: acaban en Integer._gcd (mpz_gcd),
 #    Integer._xgcd (mpz_gcdext), Integer._lcm (mpz_lcm) e Integer.inverse_mod (mpz_invert): GMP.
-FUNCIONES_GMP = {"gcd", "xgcd", "lcm", "inverse_mod"}
+FUNCIONES_GMP = {"gcd": 2, "xgcd": 2, "lcm": 2, "inverse_mod": 2, "binomial": 2, "factorial": 1}
+#  · binomial(n, k) y factorial(n) de enteros: algorithm='gmp' por defecto (Integer.binomial →
+#    mpz_bin_ui; Integer.factorial → mpz_fac_ui).
 METODOS_PYNAC = {"expand", "subs", "factor", "diff", "derivative", "differentiate"}
 MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   # dibujar: Graphics.save pasa por matplotlib (2D); los 3D en PNG, por la interfaz de Tachyon
@@ -251,7 +253,7 @@ def llamadas_pari(texto_prep, ctx):
 
 
 def llamadas_gmp(texto_prep, ctx):
-    """¿La línea llama a gcd, xgcd, lcm o inverse_mod con enteros de Sage? (todo ZZ: GMP)"""
+    """¿La línea llama a gcd, xgcd, lcm, inverse_mod, binomial o factorial con enteros de Sage? (todo ZZ: GMP)"""
     try:
         arbol = ast.parse(texto_prep.strip())
     except SyntaxError:
@@ -260,9 +262,9 @@ def llamadas_gmp(texto_prep, ctx):
         if not isinstance(n, ast.Call) or n.keywords:
             continue
         f = n.func
-        if isinstance(f, ast.Name) and f.id in FUNCIONES_GMP and len(n.args) == 2:
+        if isinstance(f, ast.Name) and f.id in FUNCIONES_GMP and len(n.args) == FUNCIONES_GMP[f.id]:
             partes = n.args
-        elif isinstance(f, ast.Attribute) and f.attr in FUNCIONES_GMP and len(n.args) == 1:
+        elif isinstance(f, ast.Attribute) and f.attr in FUNCIONES_GMP and len(n.args) == FUNCIONES_GMP[f.attr] - 1:
             partes = [f.value] + n.args
         else:
             continue
