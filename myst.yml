@@ -50,6 +50,7 @@ project:
       children:
         - file: capitulos/21-padres.md
         - file: capitulos/22-coercion.md
+        - file: capitulos/23-exacto-aproximado.md
 site:
   template: book-theme
   options:

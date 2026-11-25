@@ -74,7 +74,10 @@ CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Real Field with 53 bits of precision$", "RR"), (r"^Real Field with (\d+) bits of precision$", r"RealField(\1)"),
           (r"^Symbolic Ring$", "SR"), (r"^Finite Field of size (\d+)$", r"GF(\1)"),
           (r"^Ring of integers modulo (\d+)$", r"Zmod(\1)"), (r"^Complex Field with 53 bits of precision$", "CC"), (r"^Complex Field with (\d+) bits of precision$", r"ComplexField(\1)"),
-          (r"^Real Double Field$", "RDF"),
+          (r"^Real Double Field$", "RDF"), (r"^Complex Double Field$", "CDF"),
+          (r"^Real Interval Field with 53 bits of precision$", "RIF"), (r"^Real Interval Field with (\d+) bits of precision$", r"RealIntervalField(\1)"),
+          (r"^Real ball field with 53 bits of precision$", "RBF"), (r"^Real ball field with (\d+) bits of precision$", r"RealBallField(\1)"),
+          (r"^Complex ball field with 53 bits of precision$", "CBF"),
           (r"^Algebraic Field$", "QQbar"), (r"^Algebraic Real Field$", "AA"),
           # f(x) = x^2: Sage escribe la función como «x |--> x^2»; la etiqueta corta del libro lo imita
           (r"^Callable function ring with argument (\w+)$", r"\1 ↦ SR"),
@@ -196,6 +199,12 @@ def motor_por_valor(v, multiplica=False, principal=True):
         return "MPFR"                          # CC es sage.rings.complex_mpfr: dos números de MPFR
     if corto == "SR" or corto.endswith("↦ SR"):
         return "Pynac"
+    # Intervalos: real_mpfi.pyx opera con mpfi_add, mpfi_mul…; bolas: real_arb.pyx, con arb_add… de
+    # sage.libs.flint.arb (Arb forma parte de FLINT desde la versión 3). RDF opera con double de C: sin motor
+    if corto == "RIF" or corto.startswith("RealIntervalField("):
+        return "MPFI"
+    if corto in ("RBF", "CBF") or corto.startswith("RealBallField("):
+        return "Arb"
     return None
 
 

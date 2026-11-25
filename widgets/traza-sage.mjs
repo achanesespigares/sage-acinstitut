@@ -242,6 +242,8 @@ const MOTORES = {
   FLINT: "la biblioteca de teoría de números rápida, que guarda y opera las matrices de enteros y fracciones",
   LinBox: "la biblioteca de álgebra lineal exacta, que multiplica las matrices de GF(p), calcula sus determinantes y el polinomio característico de las de enteros",
   NTL: "la biblioteca de teoría de números de Victor Shoup, que factoriza los polinomios de enteros",
+  MPFI: "la biblioteca de intervalos, hecha sobre MPFR: redondea cada extremo hacia fuera, para que el valor exacto quede siempre dentro",
+  Arb: "la aritmética de bolas de FLINT (antes una biblioteca aparte, Arb): lleva junto a cada número una cota de su error",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
 };
 // Nombres completos de los padres, para la narración
@@ -249,8 +251,11 @@ const MOTORES = {
 function vNar(v) { return /\n/.test(v) ? '<code class="tz-matnar">' + esc(v) + "</code>" : esc(v); }
 function nombrePadre(b) {
   const m = /^GF\((\d+)\)$/.exec(b), c = /^ComplexField\((\d+)\)$/.exec(b), z = /^Zmod\((\d+)\)$/.exec(b);
+  const r = /^Real(Field|IntervalField|BallField)\((\d+)\)$/.exec(b);
   return PADRES[b] || (m ? "el cuerpo de " + m[1] + " elementos" : c ? "los complejos con " + c[1] + " bits de precisión"
-    : z ? "los restos módulo " + z[1] : b);
+    : z ? "los restos módulo " + z[1]
+    : r ? { Field: "los reales con ", IntervalField: "los intervalos de reales con ", BallField: "las bolas de reales con " }[r[1]] + r[2] + " bits de precisión"
+    : b);
 }
 // QQ^3: vectores de 3 componentes; Mat(2×2, QQ): matrices de 2 filas y 2 columnas
 function descPadreCompuesto(tp) {
@@ -263,7 +268,7 @@ function descPadreCompuesto(tp) {
     + (m[4] ? " (Sage solo guarda las casillas que no son 0)" : "");
   m = /^(.+)\[(\w+)\]$/.exec(tp);
   if (m) return ", los polinomios en " + m[2] + " con coeficientes en " + nombrePadre(m[1]);
-  m = /^(GF|ComplexField|Zmod)\((\d+)\)$/.exec(tp);
+  m = /^(GF|ComplexField|Zmod|RealField|RealIntervalField|RealBallField)\((\d+)\)$/.exec(tp);
   if (m) return ", " + nombrePadre(tp);
   return "";
 }
@@ -272,7 +277,12 @@ const ESPACIOS = { espacio: "un espacio vectorial entero", subespacio: "un subes
   anillo: "un anillo: un padre, con su suma y su producto, del que salen elementos como R(3)" };
 const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53 bits de precisión", CC: "los complejos con 53 bits de precisión", SR: "el anillo simbólico",
   QQbar: "los números algebraicos: raíces de polinomios con coeficientes racionales, guardadas de forma exacta",
-  AA: "los números algebraicos reales: raíces reales de polinomios con coeficientes racionales, guardadas de forma exacta" };
+  AA: "los números algebraicos reales: raíces reales de polinomios con coeficientes racionales, guardadas de forma exacta",
+  RDF: "los decimales de doble precisión del procesador, como los float de Python",
+  CDF: "los complejos de doble precisión del procesador",
+  RIF: "los intervalos de reales, con 53 bits en cada extremo",
+  RBF: "las bolas de reales: un centro con 53 bits y un radio que acota el error",
+  CBF: "las bolas de complejos, con 53 bits" };
 // Objetos de Sage sin padre: la etiqueta es su clase
 const SIN_PADRE = { Graph: "un grafo de Sage: no tiene padre, y la etiqueta es su clase" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
