@@ -1290,8 +1290,12 @@ function renderTraza({ model, el }) {
       if (la.length > lb.length) return "Se inserta " + esc(pyVal(la[i])) + " en la posición " + i + " de <code>" + lista + "</code>: las casillas de detrás se corren un sitio a la derecha.";
       return "Se quita la casilla " + i + " de <code>" + lista + "</code>, que valía " + esc(pyVal(lb[i])) + ": las de detrás se corren un sitio a la izquierda y la lista queda con " + la.length + (la.length === 1 ? " casilla." : " casillas.");
     }
-    const escrito = p.salida !== prev.salida && !/^(print|for|while|if|elif|else|def|return)\b/.test(txt) && !/^\w+\s*=[^=]/.test(txt)
-      ? salida(p.salida).slice(salida(prev.salida).length).join(" ") : "";
+    const nuevas = p.salida !== prev.salida && !/^(print|for|while|if|elif|else|def|return)\b/.test(txt) && !/^\w+\s*=[^=]/.test(txt)
+      ? salida(p.salida).slice(salida(prev.salida).length) : [];
+    const escrito = nuevas.join(" ");
+    // Un texto largo (coercion_model.explain…) no cabe en una frase: se manda a la consola
+    if (nuevas.length > 3 && !escrito.includes(IMAGEN) && !nuevas.every(l => l.trim().startsWith("[")))
+      return "Esta línea no guarda nada en ninguna variable, pero escribe " + nuevas.length + " líneas: están abajo, en la consola de Sage.";
     if (escrito && escrito.includes(IMAGEN)) return "Esta línea no guarda nada en ninguna variable. Su valor es un gráfico, y la consola, como un cuaderno de Sage, no escribe su nombre: lo <b>dibuja</b>.";
     if (escrito) return "Esta línea no guarda nada en ninguna variable. Como en la consola de Sage, se escribe su valor: <code>" + esc(escrito) + "</code>.";
     if (/^for\s/.test(txt) && p.linea !== cab) return "El <code>for</code> no tiene más elementos que recorrer: termina, y el programa sigue por la primera línea de después del bucle.";

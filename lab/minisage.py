@@ -54,7 +54,8 @@ class Padre:
     # porque el trazador sondea atributos (parent, category, base_ring…) con hasattr y getattr
     _METODOS_DE_PADRE = {"is_field", "is_finite", "is_exact", "is_commutative", "is_integral_domain",
                          "cardinality", "order", "characteristic", "zero", "one", "list", "gen", "gens",
-                         "ngens", "an_element", "random_element", "fraction_field"}
+                         "ngens", "an_element", "random_element", "fraction_field",
+                         "has_coerce_map_from", "coerce_map_from", "convert_map_from"}
 
     def __getattr__(self, nombre):
         if nombre in Padre._METODOS_DE_PADRE:

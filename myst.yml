@@ -49,6 +49,7 @@ project:
     - title: Parte V · Sage por dentro
       children:
         - file: capitulos/21-padres.md
+        - file: capitulos/22-coercion.md
 site:
   template: book-theme
   options:
