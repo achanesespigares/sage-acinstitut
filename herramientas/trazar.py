@@ -820,8 +820,10 @@ def ejecuta(codigo, codigo_prep, entradas=()):
             if evento == "line":
                 estado_error["propagando"] = False
             cadena, f = [], frame
-            while f is not None and f.f_code.co_filename == ARCHIVO:
-                if not es_cuerpo_de_clase(f):
+            # Se sube hasta el final: una función del programa puede llamarla código de fuera
+            # (doctest, plot, sorted con key=…), y la cadena no debe cortarse ahí
+            while f is not None:
+                if f.f_code.co_filename == ARCHIVO and not es_cuerpo_de_clase(f):
                     cadena.append(f)
                 f = f.f_back
             cadena.reverse()
@@ -859,6 +861,18 @@ def ejecuta(codigo, codigo_prep, entradas=()):
             sys.settrace(tracer)
             try:
                 mios = {**vars(builtins), "input": entrada_simulada}
+                if MOTOR["nombre"] == "minisage":
+                    # En el laboratorio no están los módulos de dentro de Sage: `import sage.…` avisa
+                    import minisage
+                    importa = builtins.__import__
+
+                    def importa_lab(nombre, *args, **kwds):
+                        if nombre == "sage" or nombre.startswith("sage."):
+                            raise minisage.NoEnElLaboratorio(
+                                f"«import {nombre}»: los módulos de dentro de Sage no están en el laboratorio. "
+                                "Pruébalo en Sage real.")
+                        return importa(nombre, *args, **kwds)
+                    mios["__import__"] = importa_lab
                 exec(compila(codigo_prep), {**MOTOR["base"], "__name__": "__main__", "__builtins__": mios, ECO: eco})
             except BaseException as e:
                 sys.settrace(None)

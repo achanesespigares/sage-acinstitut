@@ -52,6 +52,7 @@ project:
         - file: capitulos/22-coercion.md
         - file: capitulos/23-exacto-aproximado.md
         - file: capitulos/24-debajo.md
+        - file: capitulos/25-doctests-cython.md
 site:
   template: book-theme
   options:
