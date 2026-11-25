@@ -79,6 +79,8 @@ CORTOS = [(r"^Integer Ring$", "ZZ"), (r"^Rational Field$", "QQ"),
           (r"^Real ball field with 53 bits of precision$", "RBF"), (r"^Real ball field with (\d+) bits of precision$", r"RealBallField(\1)"),
           (r"^Complex ball field with 53 bits of precision$", "CBF"),
           (r"^Algebraic Field$", "QQbar"), (r"^Algebraic Real Field$", "AA"),
+          # los objetos de GAP que da libgap tienen por padre la interfaz con la biblioteca
+          (r"^C library interface to GAP$", "libgap"),
           # f(x) = x^2: Sage escribe la función como «x |--> x^2»; la etiqueta corta del libro lo imita
           (r"^Callable function ring with argument (\w+)$", r"\1 ↦ SR"),
           (r"^Callable function ring with arguments (\(.*\))$", r"\1 ↦ SR")]
@@ -167,7 +169,9 @@ MODULOS_PERFIL = [(re.compile(r"maxima"), "Maxima"),
                   (re.compile(r"giac"), "Giac"),
                   (re.compile(r"[/\\]sympy[/\\]"), "SymPy"),
                   # find_root resuelve con scipy.optimize.brentq (lo dice su documentación)
-                  (re.compile(r"[/\\]scipy[/\\]optimize[/\\]"), "SciPy")]
+                  (re.compile(r"[/\\]scipy[/\\]optimize[/\\]"), "SciPy"),
+                  # variety() descompone el ideal con Singular (triang.lib, por la interfaz)
+                  (re.compile(r"libs[/\\]singular[/\\]function_factory|interfaces[/\\]singular\.py"), "Singular")]
 # numerical_integral: «ALGORITHM: Uses calls to the GSL (GNU Scientific Library) C library»
 FUNCIONES_GSL = {"numerical_integral"}
 
@@ -343,6 +347,48 @@ def llamadas_polinomios(texto_prep, ctx):
     return None
 
 
+# Objetos de otros programas, que Sage solo envuelve: el valor lo calcula (y lo escribe) el programa
+#   cypari2.gen.Gen → PARI; sage.libs.gap.element.GapElement… → GAP (libgap);
+#   sage.interfaces.maxima.MaximaElement → Maxima (otro proceso); SingularElement → Singular
+INTERFACES = [("cypari2", "PARI"), ("sage.libs.gap", "GAP"), ("sage.interfaces.gap", "GAP"),
+              ("sage.interfaces.maxima", "Maxima"), ("sage.interfaces.singular", "Singular")]
+
+
+def motor_de_interfaz(v):
+    mod = type(v).__module__ or ""
+    for prefijo, motor in INTERFACES:
+        if mod.startswith(prefijo):
+            return motor
+    return None
+
+
+def llamadas_otras(texto_prep, ctx):
+    """· I.groebner_basis() sin argumentos (MPolynomialIdeal): el algoritmo '' llama a
+      _groebner_basis_libsingular("groebner") → Singular (multi_polynomial_ideal.py).
+    · order() de un grupo de permutaciones: si _order() no lo sabe, Integer(self.gap().Size()) → GAP."""
+    try:
+        arbol = ast.parse(texto_prep.strip())
+    except SyntaxError:
+        return None
+    for n in ast.walk(arbol):
+        if not (isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)) or n.args or n.keywords:
+            continue
+        try:
+            obj = eval(compile(ast.Expression(n.func.value), "", "eval"), entorno(), dict(ctx))
+        except Exception:
+            continue
+        clase, mod = type(obj).__name__, type(obj).__module__ or ""
+        if n.func.attr == "groebner_basis" and clase.startswith("MPolynomialIdeal"):
+            return "Singular"
+        if n.func.attr == "order" and mod.startswith("sage.groups.perm_gps"):
+            try:
+                if obj._order() is None and len(obj.gens()) > 1:
+                    return "GAP"
+            except Exception:
+                pass
+    return None
+
+
 def llamadas_matrices(texto_prep, ctx):
     """Determinante, inversa, polinomio característico y autovalores de una matriz, según el
     código de Sage 10.8: det e inversa en ZZ y QQ, FLINT («None: (default) uses flint»); det en
@@ -428,6 +474,13 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
     m = llamadas_polinomios(texto_prep, ctx_antes)
     if m and m not in motores:
         motores.append(m)
+    m = llamadas_otras(texto_prep, ctx_antes)
+    if m and m not in motores:
+        motores.append(m)
+    for v in nuevos:                           # un objeto de PARI, GAP, Maxima o Singular
+        m = motor_de_interfaz(v)
+        if m and m not in motores:
+            motores.append(m)
     try:
         if any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in FUNCIONES_GSL
                for n in ast.walk(ast.parse(texto_prep.strip()))) and "GSL" not in motores:
@@ -729,11 +782,20 @@ def ejecuta(codigo, codigo_prep, entradas=()):
 
     estado_error = {"propagando": False}
 
+    def desde_del(frame):
+        # el recolector de basura borra objetos de otras líneas (MaximaElement.__del__ avisa
+        # a Maxima): eso no es trabajo de la línea que se está ejecutando
+        while frame is not None:
+            if frame.f_code.co_name == "__del__":
+                return True
+            frame = frame.f_back
+        return False
+
     def perfilador(frame, evento, arg):
         if evento == "call":
             nombre = frame.f_code.co_filename
             for patron, motor in MODULOS_PERFIL:
-                if patron.search(nombre) and motor not in perfil:
+                if patron.search(nombre) and motor not in perfil and not desde_del(frame):
                     perfil.append(motor)
 
     def tracer(frame, evento, arg):

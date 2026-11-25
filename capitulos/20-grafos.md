@@ -175,7 +175,7 @@ P.automorphism_group().order()
 
 En K(5, 2) se ven las 120 sin hacer ninguna cuenta. Si se reordenan los números 1, 2, 3, 4 y 5 (5! = 120 maneras, capítulo 19), las parejas disjuntas siguen siendo disjuntas. Cada reordenación mueve los vértices y deja el grafo igual.
 
-Lo que devuelve `automorphism_group` es un **grupo de permutaciones**. Sage tiene una parte entera dedicada a los grupos, y el programa que hay detrás de muchos de ellos, GAP, aparece en el capítulo 24.
+Lo que devuelve `automorphism_group` es un **grupo de permutaciones**. Sage tiene una parte entera dedicada a los grupos, y su orden lo calcula el programa que hay detrás de muchos de ellos: **GAP**, que se presenta en el capítulo 24.
 ::::
 
 :::{admonition} La misma idea en tres lenguajes

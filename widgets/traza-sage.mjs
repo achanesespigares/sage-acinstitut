@@ -245,6 +245,8 @@ const MOTORES = {
   MPFI: "la biblioteca de intervalos, hecha sobre MPFR: redondea cada extremo hacia fuera, para que el valor exacto quede siempre dentro",
   Arb: "la aritmética de bolas de FLINT (antes una biblioteca aparte, Arb): lleva junto a cada número una cota de su error",
   Giac: "otro programa de cálculo simbólico, al que Sage pregunta si está instalado",
+  GAP: "el programa de teoría de grupos (órdenes, subgrupos, si un grupo es resoluble…)",
+  Singular: "el programa de álgebra conmutativa: polinomios de varias variables, ideales y bases de Gröbner",
 };
 // Nombres completos de los padres, para la narración
 // En la narración, una matriz (varias líneas) va en un bloque, con sus filas enteras
@@ -282,9 +284,13 @@ const PADRES = { ZZ: "los enteros", QQ: "los racionales", RR: "los reales con 53
   CDF: "los complejos de doble precisión del procesador",
   RIF: "los intervalos de reales, con 53 bits en cada extremo",
   RBF: "las bolas de reales: un centro con 53 bits y un radio que acota el error",
-  CBF: "las bolas de complejos, con 53 bits" };
+  CBF: "las bolas de complejos, con 53 bits",
+  libgap: "la interfaz de Sage con GAP: el objeto vive dentro de GAP, y Sage guarda solo una referencia",
+  Maxima: "la interfaz de Sage con Maxima: el objeto es una variable dentro del proceso de Maxima",
+  Singular: "la interfaz de Sage con Singular: el objeto es una variable dentro del proceso de Singular" };
 // Objetos de Sage sin padre: la etiqueta es su clase
-const SIN_PADRE = { Graph: "un grafo de Sage: no tiene padre, y la etiqueta es su clase" };
+const SIN_PADRE = { Graph: "un grafo de Sage: no tiene padre, y la etiqueta es su clase",
+  Gen: "un objeto de PARI: no tiene padre de Sage, y la etiqueta es su clase" };
 const esDePython = t => ["int", "float", "str", "bool", "list", "tuple", "dict", "set", "NoneType", "range"].includes(t);
 
 // «Sage real»: el mismo programa en SageMathCell, el servidor público de Sage, dentro de la página.
