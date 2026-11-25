@@ -173,8 +173,11 @@ def motor_por_valor(v, multiplica=False, principal=True):
     # GF(p) pequeño multiplican con LinBox (linbox_matrix_matrix_multiply → fgemm de
     # FFLAS-FFPACK), pero suman con un bucle propio; los vectores de ZZ y QQ, con GMP (mpq_add).
     clase = type(v).__name__
-    if clase.startswith(("Matrix_", "Vector_", "FreeModuleElement")) and not principal:
+    if clase.startswith(("Matrix_", "Vector_", "FreeModuleElement", "Polynomial_")) and not principal:
         return None
+    # Polinomios de QQ[x], ZZ[x] y GF(p)[x]: fmpq_poly, fmpz_poly y nmod_poly de FLINT
+    if clase in POLINOMIOS_FLINT:
+        return "FLINT"
     if clase in ("Matrix_integer_dense", "Matrix_rational_dense"):
         return "FLINT"
     if clase.startswith("Matrix_modn_dense"):
@@ -272,6 +275,52 @@ def llamadas_gmp(texto_prep, ctx):
     return False
 
 
+POLINOMIOS_FLINT = {"Polynomial_rational_flint", "Polynomial_integer_dense_flint", "Polynomial_zmod_flint"}
+
+
+def llamadas_polinomios(texto_prep, ctx):
+    """Polinomios de una variable, según el código de Sage 10.8:
+    · quo_rem, gcd, xgcd y lcm de QQ[x] → fmpq_poly_divrem, _gcd, _xgcd, _lcm (FLINT); las
+      funciones gcd(p, q), xgcd y lcm llaman al método del primero.
+    · p(3) en QQ[x] con un número de ZZ o QQ → fmpq_poly_evaluate (FLINT).
+    · factor en QQ[x] → RationalField._factor_univariate_polynomial: «This method calls PARI».
+    · factor en GF(p)[x] (Polynomial_zmod_flint) → factor_helper → nmod_poly_factor (FLINT)."""
+    try:
+        arbol = ast.parse(texto_prep.strip())
+    except SyntaxError:
+        return None
+
+    def valor(nodo):
+        return eval(compile(ast.Expression(nodo), "", "eval"), entorno(), dict(ctx))
+
+    for n in ast.walk(arbol):
+        if not isinstance(n, ast.Call) or n.keywords:
+            continue
+        f = n.func
+        try:
+            if isinstance(f, ast.Attribute) and f.attr in ("quo_rem", "gcd", "xgcd", "lcm", "factor"):
+                obj, nombre = valor(f.value), f.attr
+            elif isinstance(f, ast.Name) and f.id in ("gcd", "xgcd", "lcm", "factor") and n.args:
+                obj, nombre = valor(n.args[0]), f.id
+            elif isinstance(f, ast.Name) and len(n.args) == 1:
+                obj, nombre = valor(f), "evaluar"
+                if padre_de(valor(n.args[0]))[0] not in ("ZZ", "QQ"):
+                    continue
+            else:
+                continue
+        except Exception:
+            continue
+        clase = type(obj).__name__
+        if nombre == "factor":
+            if clase == "Polynomial_rational_flint":
+                return "PARI"
+            if clase == "Polynomial_zmod_flint":
+                return "FLINT"
+        elif clase == "Polynomial_rational_flint":
+            return "FLINT"
+    return None
+
+
 def llamadas_matrices(texto_prep, ctx):
     """Determinante, inversa, polinomio característico y autovalores de una matriz, según el
     código de Sage 10.8: det e inversa en ZZ y QQ, FLINT («None: (default) uses flint»); det en
@@ -352,6 +401,9 @@ def quien_calcula(texto_prep, perfil, nuevos, ctx_antes):
     if llamadas_gmp(texto_prep, ctx_antes) and "GMP" not in motores:
         motores.append("GMP")
     m = llamadas_matrices(texto_prep, ctx_antes)
+    if m and m not in motores:
+        motores.append(m)
+    m = llamadas_polinomios(texto_prep, ctx_antes)
     if m and m not in motores:
         motores.append(m)
     try:

@@ -78,7 +78,7 @@ e = B.eigenvalues()
 ```
 
 - `p` vale `x^3 - 3*x^2 - 4*x`, con la etiqueta `QQ[x]`: un **polinomio** en *x* con coeficientes racionales. No vive en SR, sino en un anillo de polinomios propio. Lo calcula **FLINT**: Sage quita los denominadores de la matriz y llama a `fmpz_mat_charpoly`.
-- `p.factor()` escribe `(x - 4) * x * (x + 1)`.
+- `p.factor()` escribe `(x - 4) * x * (x + 1)`. Para factorizar un polinomio de QQ[x], Sage llama a **PARI** (capítulo 18).
 - `e` vale `[4, 0, -1]`: los autovalores, uno por raíz.
 - `(B - 2*identity_matrix(QQ, 3)).det()` escribe `12` (el determinante también lo calcula FLINT). Como no es 0, *B* − 2I es invertible y su núcleo es solo el 0: **ningún** vector va a parar a 2 veces él mismo.
 - El núcleo de *B* + I (es decir, de *B* − (−1)·I) es una recta, y el vector de su base es `(1, -3/2, -1/2)`: la mitad del (2, −3, −1) del apartado 1.
@@ -137,7 +137,7 @@ R.change_ring(QQbar).is_diagonalizable()
 
 **Faltan autovectores.**
 
-- El polinomio de *M* es `(x - 2)^2`: el autovalor 2 aparece **dos** veces (multiplicidad algebraica 2).
+- El polinomio de *M* es `(x - 2)^2`: el autovalor 2 aparece **dos** veces (multiplicidad algebraica 2). FLINT calcula el polinomio y PARI lo factoriza.
 - Pero el núcleo de *N* = *M* − 2I tiene dimensión `1`: solo **una** recta de autovectores (multiplicidad geométrica 1). Con una recta no se forma una base del plano.
 - `M.is_diagonalizable()` escribe `False`.
 - `J` es `[2 1; 0 2]`: la **forma de Jordan**. Es casi diagonal; el 1 de arriba es lo que falta para serlo. A esa pieza se la llama **bloque de Jordan**.

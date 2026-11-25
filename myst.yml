@@ -43,6 +43,7 @@ project:
     - title: Parte IV · Números y estructuras
       children:
         - file: capitulos/17-primos.md
+        - file: capitulos/18-polinomios.md
 site:
   template: book-theme
   options:

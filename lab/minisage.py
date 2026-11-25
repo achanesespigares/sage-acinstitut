@@ -42,6 +42,9 @@ class Padre:
     def __pow__(self, n):                       # QQ^3: un espacio vectorial
         no_lo_se(f"«{self._corto}^{n}» (los espacios vectoriales)")
 
+    def __getitem__(self, k):                   # QQ['x']: un anillo de polinomios (R.<x> = QQ[])
+        no_lo_se(f"«{self._corto}['{k}']» (los anillos de polinomios)")
+
     def __repr__(self):
         return self._nombre
 
