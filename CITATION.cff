@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "Si usas este libro, cítalo así."
-title: "Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro"
+title: "Mirar y ver · SageMath · cómo piensa tu código"
 type: software
 authors:
   - family-names: "Chanes Espigares"

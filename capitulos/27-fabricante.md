@@ -350,7 +350,7 @@ Azar con semilla y comprobación (comprobado con Sage 10.8, Python 3.13 con SymP
 
 Este es el último capítulo. Has visto Sage por fuera, como una calculadora que sabe matemáticas, y por dentro: los padres, la coerción, los programas que hacen las cuentas, los doctests y Cython. Y lo has usado para construir dos proyectos enteros.
 
-Queda una grieta, la más honda. Sage comprueba: doce ecuaciones de doce, siete doctests de siete. Pero comprobar muchos casos no es **demostrar** que vale para todos. El fabricante dice que el discriminante siempre es un cuadrado, y lo hemos visto en cuatro ejemplos y razonado en una línea. ¿Puede un ordenador comprobar ese razonamiento, paso a paso, sin fiarse de nadie? Ese es el oficio de Lean 4, y el último libro de la colección «Mirar y ver tu código pensar».
+Queda una grieta, la más honda. Sage comprueba: doce ecuaciones de doce, siete doctests de siete. Pero comprobar muchos casos no es **demostrar** que vale para todos. El fabricante dice que el discriminante siempre es un cuadrado, y lo hemos visto en cuatro ejemplos y razonado en una línea. ¿Puede un ordenador comprobar ese razonamiento, paso a paso, sin fiarse de nadie? Ese es el oficio de Lean 4, y el último libro de la colección «Mirar y ver · cómo piensa tu código».
 
 ## Retos
 

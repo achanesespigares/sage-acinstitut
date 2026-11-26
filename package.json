@@ -1,7 +1,7 @@
 {
   "name": "sage-acinstitut",
   "version": "0.1.0",
-  "description": "Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro · AC Institut (Jupyter Book 2 / MyST)",
+  "description": "Mirar y ver · SageMath · cómo piensa tu código · AC Institut (Jupyter Book 2 / MyST)",
   "scripts": {
     "trazas": "python herramientas/trazar.py capitulos/*.md",
     "conformidad": "python herramientas/conformidad.py",

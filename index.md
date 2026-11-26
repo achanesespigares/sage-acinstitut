@@ -1,6 +1,6 @@
 ---
-title: Mirar y ver tu código pensar
-subtitle: Entendiendo SageMath, desde dentro
+title: Mirar y ver · SageMath
+subtitle: cómo piensa tu código
 ---
 
 Un libro para aprender SageMath viendo cómo piensa cada programa: línea a línea, con la memoria a la vista. Es el cuarto de la colección, después de los de Python, R y Julia, y está hecho con el mismo método. Cada idea parte de una situación cotidiana, se construye con código y se comprueba visualizando la ejecución.

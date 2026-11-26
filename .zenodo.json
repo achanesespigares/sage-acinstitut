@@ -1,0 +1,10 @@
+{
+  "title": "Mirar y ver · SageMath · cómo piensa tu código",
+  "upload_type": "lesson",
+  "description": "Libro interactivo para aprender SageMath viendo cómo se ejecuta cada programa, paso a paso, y quién hace cada cálculo (Maxima, PARI, GAP, FLINT…). Dos rutas en cada capítulo (base y a fondo), laboratorio en el navegador y Sage real con SageMathCell. AC Institut.",
+  "creators": [{ "name": "Chanes Espigares, Antonio" }],
+  "license": "cc-by-nc-sa-4.0",
+  "language": "spa",
+  "keywords": ["SageMath", "Sage", "matemáticas", "programación", "álgebra computacional", "educación", "visualización de código", "Jupyter Book"],
+  "related_identifiers": [{ "identifier": "https://achanesespigares.github.io/sage-acinstitut/", "relation": "isDocumentedBy", "resource_type": "publication-book" }]
+}

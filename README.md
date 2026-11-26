@@ -1,4 +1,4 @@
-# Mirar y ver tu código pensar · Entendiendo SageMath, desde dentro
+# Mirar y ver · SageMath · cómo piensa tu código
 
 Aprender SageMath viendo cómo se ejecuta cada programa, línea a línea y con la memoria a la vista. Es el cuarto libro de la colección, después de los de Python, R y Julia. Está hecho con Jupyter Book 2 (motor MyST) y se publica en GitHub Pages.
 
